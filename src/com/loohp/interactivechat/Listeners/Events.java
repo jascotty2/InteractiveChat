@@ -154,6 +154,9 @@ public class Events implements Listener {
     			playernames.add(ChatColor.stripColor(player.getName()));
     			if (!player.getName().equals(player.getDisplayName())) {
     				playernames.add(ChatColor.stripColor(player.getDisplayName()));
+					if (!player.getDisplayName().matches("^[a-zA-Z0-9_].*")) {
+						playernames.add(player.getDisplayName().substring(1));
+					}
     			}
     			if (InteractiveChat.EssentialsHook) {
     				if (InteractiveChat.essenNick.containsKey(player)) {

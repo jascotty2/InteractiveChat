@@ -62,6 +62,13 @@ public class MentionDisplay {
 					
 					List<String> names = new ArrayList<String>();
 					names.add(ChatColor.stripColor(reciever.getName()));
+					final String disp = ChatColor.stripColor(reciever.getDisplayName());
+					if (!names.contains(disp)) {
+						names.add(disp);
+					}
+					if (!disp.matches("^[a-zA-Z0-9_].*")) {
+						names.add(disp.substring(1));
+					}
 					if (!names.contains(ChatColor.stripColor(reciever.getDisplayName()))) {
 						names.add(ChatColor.stripColor(reciever.getDisplayName()));
 					}

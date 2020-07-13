@@ -86,6 +86,9 @@ public class ChatPackets {
 		        		return;
 		        	}
 		        }
+				if(basecomponentarray == null) {
+					return;
+				}
 
 		        BaseComponent basecomponent = ChatComponentUtils.join(ComponentSerializer.parse(ChatColorUtils.filterIllegalColorCodes(ComponentSerializer.toString(basecomponentarray))));
 		        debug++;
@@ -122,7 +125,7 @@ public class ChatPackets {
 		        	InteractiveChat.keyTime.remove(rawMessageKey);
 		        	InteractiveChat.keyPlayer.remove(rawMessageKey);
 		        }, 5);
-		        debug++;		
+		        debug++;
 		        UUID preEventSenderUUID = sender.isPresent() ? sender.get().getUniqueId() : null;
 				PrePacketComponentProcessEvent preEvent = new PrePacketComponentProcessEvent(event.isAsync(), reciever, basecomponent, field, preEventSenderUUID);
 				Bukkit.getPluginManager().callEvent(preEvent);

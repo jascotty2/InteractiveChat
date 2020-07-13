@@ -46,16 +46,16 @@ public class ChatColorUtils {
 	}
 	
 	public static String filterIllegalColorCodes(String string) {
-		return InteractiveChat.version.equals(MCVersion.V1_16) ? string.replaceAll("ง[^0-9A-Fa-fk-orx]", "") : string.replaceAll("ง[^0-9a-fk-or]", "");
+		return InteractiveChat.version.equals(MCVersion.V1_16) ? string.replaceAll("ยง[^0-9A-Fa-fk-orx]", "") : string.replaceAll("ยง[^0-9a-fk-or]", "");
 	}
 	
     public static String getLastColors(String input) {
         String result = "";
         
         for (int i = input.length() - 1; i > 0; i--) {
-        	if (input.charAt(i - 1) == 'ง') {
+        	if (input.charAt(i - 1) == 'ยง') {
         		String color = String.valueOf(input.charAt(i - 1)) + String.valueOf(input.charAt(i));
-        		if ((i - 13) >= 0 && input.charAt(i - 12) == 'x' && input.charAt(i - 13) == 'ง') {
+        		if ((i - 13) >= 0 && input.charAt(i - 12) == 'x' && input.charAt(i - 13) == 'ยง') {
             		color = input.substring(i - 13, i + 1);
             		i -= 13;
             	}
@@ -120,13 +120,13 @@ public class ChatColorUtils {
     }
     
     public static boolean isLegal(String color) {
-    	if (color.charAt(0) != 'ง') {
+    	if (color.charAt(0) != 'ยง') {
     		return false;
     	}
-    	if (color.matches("ง[0-9a-fk-or]")) {
+    	if (color.matches("ยง[0-9a-fk-or]")) {
     		return true;
     	}
-    	if (color.matches("งxง[0-9A-F]ง[0-9A-F]ง[0-9A-F]ง[0-9A-F]ง[0-9A-F]ง[0-9A-F]")) {
+    	if (color.matches("ยงxยง[0-9A-F]ยง[0-9A-F]ยง[0-9A-F]ยง[0-9A-F]ยง[0-9A-F]ยง[0-9A-F]")) {
     		return true;
     	}
     	return false;
@@ -171,7 +171,7 @@ public class ChatColorUtils {
     		int pos = text.indexOf(" ") + 1;
     		pos = pos <= 0 ? text.length() : pos;
     		String before = leadingColor + text.substring(0, pos);
-    		//Bukkit.getConsoleSender().sendMessage(leadingColor.replace("ง", "&") + " " + text.replace("ง", "&") + " " + before.replace("ง", "&"));
+    		//Bukkit.getConsoleSender().sendMessage(leadingColor.replace("ยง", "&") + " " + text.replace("ยง", "&") + " " + before.replace("ยง", "&"));
     		sb.append(before);
     		text = text.substring(pos);
     		leadingColor = getLastColors(before);
@@ -186,9 +186,9 @@ public class ChatColorUtils {
     	
     	int pos = hex.indexOf("#");
     	if (!hex.matches(validColorHex) || pos < 0 || hex.length() < (pos + 7)) {
-    		return "งxงFงFงFงFงFงF";
+    		return "ยงxยงFยงFยงFยงFยงFยงF";
     	}
-    	return "งxง" + String.valueOf(hex.charAt(1)) + "ง" + String.valueOf(hex.charAt(2)) + "ง" + String.valueOf(hex.charAt(3)) + "ง" + String.valueOf(hex.charAt(4)) + "ง" + String.valueOf(hex.charAt(5)) + "ง" + String.valueOf(hex.charAt(6));
+    	return "ยงxยง" + String.valueOf(hex.charAt(1)) + "ยง" + String.valueOf(hex.charAt(2)) + "ยง" + String.valueOf(hex.charAt(3)) + "ยง" + String.valueOf(hex.charAt(4)) + "ยง" + String.valueOf(hex.charAt(5)) + "ยง" + String.valueOf(hex.charAt(6));
     }
     
     public static String translatePluginColorFormatting(String text) {
@@ -268,11 +268,11 @@ public class ChatColorUtils {
         	if (text.charAt(i) == code) {
         		if (text.charAt(i + 1) == 'x' && text.length() > (i + 14)) {
         			String section = text.substring(i, i + 14);
-        			String translated = section.replace(code, 'ง');
+        			String translated = section.replace(code, 'ยง');
         			text = text.replace(section, translated);
         		} else if (colors.contains(text.charAt(i + 1))) {
         			StringBuilder sb = new StringBuilder(text);
-        			sb.setCharAt(i, 'ง');
+        			sb.setCharAt(i, 'ยง');
         			text = sb.toString();
         		}
         	}

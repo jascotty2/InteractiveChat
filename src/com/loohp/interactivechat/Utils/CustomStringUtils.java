@@ -111,7 +111,7 @@ public class CustomStringUtils {
 	}
 	
 	public static String getIgnoreColorCodeRegex(String input) {
-		return input.replaceAll("(?<!^)(?=(?<!ง.).)(?=(?<!ง).)(?=(?<!\\\\).)", "(ง.)*?");
+		return input.replaceAll("(?<!^)(?=(?<!ยง.).)(?=(?<!ยง).)(?=(?<!\\\\).)", "(ยง.)*?");
 	}
 	
 	public static List<BaseComponent> loadExtras(BaseComponent basecomponent) {
@@ -161,7 +161,7 @@ public class CustomStringUtils {
 	        				extraNoExtra.getExtra().clear();
 	        			}
 	        			text.setText(text.getText() + ChatColorUtils.addColorToEachWord(extraNoExtra.toLegacyText(), ChatColorUtils.getLastColors(text.getText())));
-	        			//Bukkit.getConsoleSender().sendMessage(text.getText().replace("ง", "&"));
+	        			//Bukkit.getConsoleSender().sendMessage(text.getText().replace("ยง", "&"));
 	        		} else if (!(extra instanceof TextComponent)) {
 	        			if (text != null) {
 	        				list.add(text);

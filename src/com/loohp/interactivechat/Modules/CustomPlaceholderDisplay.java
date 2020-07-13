@@ -64,8 +64,8 @@ public class CustomPlaceholderDisplay {
 			basecomponent = processCustomPlaceholder(parseplayer, casesensitive, placeholder, cooldown, hoverEnabled, hoverText, clickEnabled, clickAction, clickValue, replaceEnabled, replaceText, basecomponent, optplayer, messageKey, unix);
 		}
 		
-		String henry = random.nextInt(100) < 80 ? "§7\"§fTerraria is love, Terraria is life§7\"\n              §7~§a§oHenry §e§o(IC Icon Artist)" : "§fShow §a§oHenry §e§o(IC Icon Artist) §fsome §cLOVE§f!\n§bClick me!\n                       §a~From the IC author";
-		basecomponent = processCustomPlaceholder(reciever, false, "Terraria", 0, true, henry, true, Action.OPEN_URL, "https://www.reddit.com/user/henryauyong", true, "§2Terraria", basecomponent, optplayer, messageKey, unix);
+		String henry = random.nextInt(100) < 80 ? "Â§7\"Â§fTerraria is love, Terraria is lifeÂ§7\"\n              Â§7~Â§aÂ§oHenry Â§eÂ§o(IC Icon Artist)" : "Â§fShow Â§aÂ§oHenry Â§eÂ§o(IC Icon Artist) Â§fsome Â§cLOVEÂ§f!\nÂ§bClick me!\n                       Â§a~From the IC author";
+		basecomponent = processCustomPlaceholder(reciever, false, "Terraria", 0, true, henry, true, Action.OPEN_URL, "https://www.reddit.com/user/henryauyong", true, "Â§2Terraria", basecomponent, optplayer, messageKey, unix);
 		
 		return basecomponent;
 	}

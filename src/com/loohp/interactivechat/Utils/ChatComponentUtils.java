@@ -286,7 +286,7 @@ public class ChatComponentUtils {
 								}
 							}
 						} else if (value instanceof String) {
-							contents.set(j, new Text(((String) value).replaceAll("ง[0-9a-e]", "งf")));
+							contents.set(j, new Text(((String) value).replaceAll("ยง[0-9a-e]", "ยงf")));
 						}
 					}
 					j++;
@@ -310,7 +310,7 @@ public class ChatComponentUtils {
 					if (InteractiveChat.version.isPost1_16()) {
 						each.setFont(base.getFontRaw());
 					}
-					//Bukkit.getConsoleSender().sendMessage(ComponentSerializer.toString(each).replace("ง", "&"));
+					//Bukkit.getConsoleSender().sendMessage(ComponentSerializer.toString(each).replace("ยง", "&"));
 				}
 				newlist.addAll(texts);
 			} else {
@@ -345,7 +345,7 @@ public class ChatComponentUtils {
 			if (colorsEnabled.equals(ColorSettings.OFF)) {
 				each.setColor(ChatColor.WHITE);
 				if (each instanceof TextComponent) {
-					((TextComponent) each).setText(((TextComponent) each).getText().replaceAll("ง[0-9a-e]", "งf"));
+					((TextComponent) each).setText(((TextComponent) each).getText().replaceAll("ยง[0-9a-e]", "ยงf"));
 				}
 				each = removeHoverEventColor(each);
 			}

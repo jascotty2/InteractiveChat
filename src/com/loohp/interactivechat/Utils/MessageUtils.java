@@ -12,14 +12,14 @@ public class MessageUtils {
 			String placeholder = icplaceholder.getKeyword();
 			if ((icplaceholder.isCaseSensitive() && ChatColor.stripColor(message).contains(placeholder)) || (!icplaceholder.isCaseSensitive() && ChatColor.stripColor(message.toLowerCase()).contains(placeholder.toLowerCase()))) {
 				String regex = CustomStringUtils.escapeMetaCharacters(placeholder);
-				regex = regex.replaceAll("\\\\?.", "(?:ง.)?(?:$0)");
+				regex = regex.replaceAll("\\\\?.", "(?:ยง.)?(?:$0)");
 				message = message.replaceAll(regex, placeholder);
 			}
 		}
 		for (String placeholder : InteractiveChat.aliasesMapping.keySet()) {
 			if (ChatColor.stripColor(message).matches(".*" + placeholder + ".*")) {
 				String regex = CustomStringUtils.escapeMetaCharacters(placeholder);
-				regex = regex.replaceAll("\\\\?.", "(?:ง.)?(?:$0)");
+				regex = regex.replaceAll("\\\\?.", "(?:ยง.)?(?:$0)");
 				message = message.replaceAll(regex, placeholder);
 			}
 			message = message.replaceAll(placeholder, InteractiveChat.aliasesMapping.get(placeholder));
