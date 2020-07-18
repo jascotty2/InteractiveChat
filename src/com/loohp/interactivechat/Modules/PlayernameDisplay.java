@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -91,7 +93,7 @@ public class PlayernameDisplay {
 						message.setText(lastColor + message.getText());
 
 						if (InteractiveChat.usePlayerNameHoverEnable) {
-							String playertext = PlaceholderAPI.setPlaceholders(player, InteractiveChat.usePlayerNameHoverText);
+							String playertext = PlaceholderAPI.setPlaceholders(player, replaceCustomConditionals(player, InteractiveChat.usePlayerNameHoverText));
 							message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(playertext).create()));
 						}
 						if (InteractiveChat.usePlayerNameClickEnable) {
@@ -116,4 +118,30 @@ public class PlayernameDisplay {
 		return product;
 	}
 
+	static Pattern pattern = Pattern.compile("\\[%if_[^% ]+%\\]");
+
+	static String replaceCustomConditionals(Player p, String msg) {
+		if (msg != null && p != null && pattern.matcher(msg).find()) {
+			String lines[] = msg.split("\n");
+			msg = "";
+			for (String s : lines) {
+				if (s.matches("^\\[%if_[^% ]+%\\].*")) {
+					if(!p.isOp()) {
+						// Permission match
+						int end = s.indexOf("%]");
+						String perm = s.substring(5, end);
+						if (p.hasPermission(perm)) {
+							msg += s.substring(end + 2) + "\n";
+						}
+					}
+				} else {
+					msg += s + "\n";
+				}
+			}
+			if (!msg.isEmpty()) {
+				msg = msg.substring(0, msg.length() - 1);
+			}
+		}
+		return msg;
+	}
 }
