@@ -109,6 +109,10 @@ public class ConfigManager {
 			e.printStackTrace();
 		}
 		
+		if (InteractiveChat.plugin.getConfig().contains("Secret.t")) {
+			InteractiveChat.t = InteractiveChat.plugin.getConfig().getBoolean("Secret.t");
+		}
+		
 		InteractiveChat.usePlayerName = getConfig().getBoolean("Player.UsePlayerNameInteraction");
 		InteractiveChat.usePlayerNameHoverEnable = getConfig().getBoolean("Player.Hover.Enable");
 		List<String> stringList = getConfig().getStringList("Player.Hover.Text");
@@ -117,6 +121,7 @@ public class ConfigManager {
 		InteractiveChat.usePlayerNameClickAction = ChatColorUtils.translateAlternateColorCodes('&', getConfig().getString("Player.Click.Action"));
 		InteractiveChat.usePlayerNameClickValue = ChatColorUtils.translateAlternateColorCodes('&', getConfig().getString("Player.Click.Value"));
 		InteractiveChat.usePlayerNameCaseSensitive = getConfig().getBoolean("Player.CaseSensitive");
+		InteractiveChat.usePlayerNameOnTranslatables = getConfig().getBoolean("Player.UseOnTranslatableComponents");
 		
 		InteractiveChat.PlayerNotFoundHoverEnable = getConfig().getBoolean("Settings.PlayerNotFound.Hover.Enable");
 		List<String> stringList2 = getConfig().getStringList("Settings.PlayerNotFound.Hover.Text");
@@ -171,7 +176,18 @@ public class ConfigManager {
 		InteractiveChat.mentionHover = String.join("\n", stringList3);
 		InteractiveChat.mentionDuration = getConfig().getLong("Chat.MentionedTitleDuration");
 		
-		InteractiveChat.UpdaterEnabled = InteractiveChat.plugin.getConfig().getBoolean("Options.Updater");
-		InteractiveChat.cancelledMessage = InteractiveChat.plugin.getConfig().getBoolean("Options.ShowCancelledNotice");
+		InteractiveChat.UpdaterEnabled = getConfig().getBoolean("Options.Updater");
+		InteractiveChat.cancelledMessage = getConfig().getBoolean("Options.ShowCancelledNotice");
+		
+		InteractiveChat.clickableCommands = getConfig().getBoolean("Commands.Enabled");
+		String[] commandsFormat = getConfig().getString("Commands.Format").split("\\{Command\\}");
+		InteractiveChat.clickableCommandsPrefix = ChatColorUtils.translateAlternateColorCodes('&', commandsFormat[0]);
+		InteractiveChat.clickableCommandsSuffix = ChatColorUtils.translateAlternateColorCodes('&', commandsFormat[commandsFormat.length - 1]);
+		InteractiveChat.clickableCommandsAction = ClickEvent.Action.valueOf(getConfig().getString("Commands.Action"));
+		InteractiveChat.clickableCommandsFormat = ChatColorUtils.translateAlternateColorCodes('&', getConfig().getString("Commands.Text"));
+		InteractiveChat.clickableCommandsHoverText = ChatColorUtils.translateAlternateColorCodes('&', String.join("\n", getConfig().getStringList("Commands.HoverMessage")));
+		InteractiveChat.clickableCommandsEnforceColors = getConfig().getBoolean("Commands.EnforceReplaceTextColor");
+		
+		InteractiveChat.block30000 = getConfig().getBoolean("Settings.BlockMessagesLongerThan30000RegardlessOfVersion");
 	}
 }

@@ -1,8 +1,5 @@
 package com.loohp.interactivechat.Utils;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -31,22 +28,10 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 
 public class ChatComponentUtils {
 	
-	private static Class<?> chatHoverEventClass;
-	private static MethodHandle hoverEventGetValueMethod;
+	private static final Pattern fontFormating = Pattern.compile("(?=(?<!\\\\)|(?<=\\\\\\\\))\\[[^\\]]*?font=[0-9a-zA-Z:_]*[^\\[]*?\\]");
+	private static final Pattern fontEscape = Pattern.compile("\\\\\\[ *?font=[0-9a-zA-Z:_]* *?\\]");
 	
-	private static Pattern fontFormating = Pattern.compile("(?=(?<!\\\\)|(?<=\\\\\\\\))\\[[^\\]]*?font=[0-9a-zA-Z:_]*[^\\[]*?\\]");
-	private static Pattern fontEscape = Pattern.compile("\\\\\\[ *?font=[0-9a-zA-Z:_]* *?\\]");
-	
-	private static String validFont = "^([0-9a-zA-Z_]+:)?[0-9a-zA-Z_]+$";
-	
-	public static void setupLegacy() {
-		try {
-			chatHoverEventClass = Class.forName("net.md_5.bungee.api.chat.HoverEvent");
-			hoverEventGetValueMethod = MethodHandles.lookup().findVirtual(chatHoverEventClass, "getValue", MethodType.methodType(BaseComponent[].class));
-		} catch (Throwable e) {
-			e.printStackTrace();
-		}
-	}
+	private static final String validFont = "^([0-9a-zA-Z_]+:)?[0-9a-zA-Z_]+$";
 	
 	public static boolean areSimilar(BaseComponent base1, BaseComponent base2, boolean compareText) {
 		if (!areEventsSimilar(base1, base2)) {
@@ -76,11 +61,11 @@ public class ChatComponentUtils {
 			return false;
 		}
 		if (InteractiveChat.version.isPost1_16()) {
-			if ((base1.getFontRaw() == null && base2.getFontRaw() != null) || (base1.getFontRaw() != null && base2.getFontRaw() == null)) {
+			if ((base1.getFont() == null && base2.getFont() != null) || (base1.getFont() != null && base2.getFont() == null)) {
 				return false;
 			}
-			if (base1.getFontRaw() != null && base2.getFontRaw() != null) {
-				if (!base1.getFontRaw().equals(base2.getFontRaw())) {
+			if (base1.getFont() != null && base2.getFont() != null) {
+				if (!base1.getFont().equals(base2.getFont())) {
 					return false;
 				}
 			}
@@ -116,11 +101,11 @@ public class ChatComponentUtils {
 			return false;
 		}
 		if (InteractiveChat.version.isPost1_16()) {
-			if ((base1.getFontRaw() == null && base2.getFontRaw() != null) || (base1.getFontRaw() != null && base2.getFontRaw() == null)) {
+			if ((base1.getFont() == null && base2.getFont() != null) || (base1.getFont() != null && base2.getFont() == null)) {
 				return false;
 			}
-			if (base1.getFontRaw() != null && base2.getFontRaw() != null) {
-				if (!base1.getFontRaw().equals(base2.getFontRaw())) {
+			if (base1.getFont() != null && base2.getFont() != null) {
+				if (!base1.getFont().equals(base2.getFont())) {
 					return false;
 				}
 			}
@@ -133,11 +118,11 @@ public class ChatComponentUtils {
 	
 	public static boolean areFontsSimilar(BaseComponent base1, BaseComponent base2) {
 		if (InteractiveChat.version.isPost1_16()) {
-			if ((base1.getFontRaw() == null && base2.getFontRaw() != null) || (base1.getFontRaw() != null && base2.getFontRaw() == null)) {
+			if ((base1.getFont() == null && base2.getFont() != null) || (base1.getFont() != null && base2.getFont() == null)) {
 				return false;
 			}
-			if (base1.getFontRaw() != null && base2.getFontRaw() != null) {
-				if (!base1.getFontRaw().equals(base2.getFontRaw())) {
+			if (base1.getFont() != null && base2.getFont() != null) {
+				if (!base1.getFont().equals(base2.getFont())) {
 					return false;
 				}
 			}
@@ -175,26 +160,24 @@ public class ChatComponentUtils {
 				HoverEvent hover2 = base2.getHoverEvent();
 				if (hover1.getAction().equals(hover2.getAction())) {
 					if (InteractiveChat.legacyChatAPI) {
-						try {
-							BaseComponent[] basecomponentarray1 = (BaseComponent[]) hoverEventGetValueMethod.invoke(hover1);
-							BaseComponent[] basecomponentarray2 = (BaseComponent[]) hoverEventGetValueMethod.invoke(hover2);
-							if (basecomponentarray1.length == basecomponentarray2.length) {
-								hoverSim = true;
-								for (int i = 0; i < basecomponentarray1.length && i < basecomponentarray2.length ; i++) {
-									BaseComponent bc1 = basecomponentarray1[i];
-									BaseComponent bc2 = basecomponentarray2[i];
-									if (!(bc1 == null && bc2 == null) && (bc1 == null || bc2 == null)) {
-										hoverSim = false;
-										break;
-									} else if (!areSimilarNoEvents(bc1, bc2, true)) {
-										hoverSim = false;
-										break;
-									}
-								}
-							}
-						} catch (Throwable e) {
-							e.printStackTrace();
-						}
+//						@SuppressWarnings("deprecation")
+//						BaseComponent[] basecomponentarray1 = hover1.getValue();
+//						@SuppressWarnings("deprecation")
+//						BaseComponent[] basecomponentarray2 = hover2.getValue();
+//						if (basecomponentarray1.length == basecomponentarray2.length) {
+//							hoverSim = true;
+//							for (int i = 0; i < basecomponentarray1.length && i < basecomponentarray2.length ; i++) {
+//								BaseComponent bc1 = basecomponentarray1[i];
+//								BaseComponent bc2 = basecomponentarray2[i];
+//								if (!(bc1 == null && bc2 == null) && (bc1 == null || bc2 == null)) {
+//									hoverSim = false;
+//									break;
+//								} else if (!areSimilarNoEvents(bc1, bc2, true)) {
+//									hoverSim = false;
+//									break;
+//								}
+//							}
+//						}
 					} else {
 						List<Content> contents1 = hover1.getContents();
 						List<Content> contents2 = hover2.getContents();
@@ -259,19 +242,16 @@ public class ChatComponentUtils {
 		return clickSim && hoverSim;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static BaseComponent removeHoverEventColor(BaseComponent baseComponent) {
 		if (baseComponent.getHoverEvent() != null) {
 			if (InteractiveChat.legacyChatAPI) {
-				try {
-					for (BaseComponent each : (BaseComponent[]) hoverEventGetValueMethod.invoke(baseComponent.getHoverEvent())) {
-						each.setColor(ChatColor.WHITE);
-						if (each instanceof TextComponent) {
-							((TextComponent) each).setText(ChatColor.stripColor(((TextComponent) each).getText()));
-						}
-					}
-				} catch (Throwable e) {
-					e.printStackTrace();
-				}
+//				for (BaseComponent each : baseComponent.getHoverEvent().getValue()) {
+//					each.setColor(ChatColor.WHITE);
+//					if (each instanceof TextComponent) {
+//						((TextComponent) each).setText(ChatColorUtils.stripColor(((TextComponent) each).getText()));
+//					}
+//				}
 			} else {
 				int j = 0;
 				List<Content> contents = baseComponent.getHoverEvent().getContents();
@@ -282,7 +262,7 @@ public class ChatComponentUtils {
 							for (BaseComponent each : (BaseComponent[]) value) {
 								each.setColor(ChatColor.WHITE);
 								if (each instanceof TextComponent) {
-									((TextComponent) each).setText(ChatColor.stripColor(((TextComponent) each).getText()));
+									((TextComponent) each).setText(ChatColorUtils.stripColor(((TextComponent) each).getText()));
 								}
 							}
 						} else if (value instanceof String) {
@@ -308,7 +288,7 @@ public class ChatComponentUtils {
 	 	        		each.copyFormatting(base, FormatRetention.EVENTS, false);
 	 	        	}
 					if (InteractiveChat.version.isPost1_16()) {
-						each.setFont(base.getFontRaw());
+						each.setFont(base.getFont());
 					}
 					//Bukkit.getConsoleSender().sendMessage(ComponentSerializer.toString(each).replace("§", "&"));
 				}
@@ -325,7 +305,7 @@ public class ChatComponentUtils {
 			if (colorsEnabled.equals(ColorSettings.OFF)) {
 				each.setColor(ChatColor.WHITE);
 				if (each instanceof TextComponent) {
-					((TextComponent) each).setText(ChatColor.stripColor(((TextComponent) each).getText()));
+					((TextComponent) each).setText(ChatColorUtils.stripColor(((TextComponent) each).getText()));
 				}
 				each = removeHoverEventColor(each);
 			}
@@ -355,24 +335,18 @@ public class ChatComponentUtils {
 		return product;
 	}
 	
-	public static BaseComponent join(BaseComponent base, BaseComponent... basecomponentarray) {
-		if (basecomponentarray.length <= 0) {
-			return base;
-		} else {
-			BaseComponent product = base;
-			for (BaseComponent each : basecomponentarray) {
-				product.addExtra(each);
-			}
-			return product;
+	public static BaseComponent join(BaseComponent... toJoin) {
+		if (toJoin.length <= 0) {
+			return new TextComponent("");
 		}
-	}
-	
-	public static BaseComponent join(BaseComponent[] basecomponentarray) {
-		if (basecomponentarray.length <= 1) {
-			return basecomponentarray[0];
-		} else {
-			return join(basecomponentarray[0], Arrays.copyOfRange(basecomponentarray, 1, basecomponentarray.length));
+		
+		BaseComponent base = toJoin[0];
+		for (int i = 1; i < toJoin.length; i++) {
+			BaseComponent each = toJoin[i];
+			base.addExtra(each);
 		}
+		
+		return base;
 	}
 	
 	public static BaseComponent translatePluginFontFormatting(BaseComponent basecomponent) {
@@ -381,8 +355,8 @@ public class ChatComponentUtils {
 		Optional<String> currentFont = Optional.empty();
 		
 		for (BaseComponent each : list) {
-			if (each.getFontRaw() != null) {
-				currentFont = Optional.of(each.getFontRaw());
+			if (each.getFont() != null) {
+				currentFont = Optional.of(each.getFont());
 			}
 			
 			if (each instanceof TextComponent) {
@@ -397,7 +371,7 @@ public class ChatComponentUtils {
 			    	    String foramtedFont = matcher.group().toLowerCase();
 			    	    
 			    	    String colorCodesInside = ChatColorUtils.getLastColors(foramtedFont);
-			    	    String striped = ChatColor.stripColor(foramtedFont);
+			    	    String striped = ChatColorUtils.stripColor(foramtedFont);
 			    	    
 			    	    int lengthDiff = foramtedFont.length() - striped.length();
 			    	    

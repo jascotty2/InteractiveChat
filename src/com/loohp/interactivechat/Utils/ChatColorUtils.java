@@ -14,11 +14,11 @@ import net.md_5.bungee.api.chat.BaseComponent;
 
 public class ChatColorUtils {
 	
-	private static Set<Character> colors = new HashSet<Character>();
-	private static Pattern colorFormating = Pattern.compile("(?=(?<!\\\\)|(?<=\\\\\\\\))\\[[^\\]]*?color=#[0-9a-fA-F]{6}[^\\[]*?\\]");
-	private static Pattern colorEscape = Pattern.compile("\\\\\\[ *?color=#[0-9a-fA-F]{6} *?\\]");
+	private static final Set<Character> colors = new HashSet();
+	private static final Pattern colorFormating = Pattern.compile("(?=(?<!\\\\)|(?<=\\\\\\\\))\\[[^\\]]*?color=#[0-9a-fA-F]{6}[^\\[]*?\\]");
+	private static final Pattern colorEscape = Pattern.compile("\\\\\\[ *?color=#[0-9a-fA-F]{6} *?\\]");
 	
-	private static String validColorHex = "^#[0-9a-fA-F]{6}$";
+	private static final String validColorHex = "^#[0-9a-fA-F]{6}$";
 	
 	static {
 		colors.add('0');
@@ -45,8 +45,12 @@ public class ChatColorUtils {
 		colors.add('r');
 	}
 	
+	public static String stripColor(String string) {
+		return string.replaceAll("�[0-9A-Fa-fk-orx]", "");
+	}
+	
 	public static String filterIllegalColorCodes(String string) {
-		return InteractiveChat.version.equals(MCVersion.V1_16) ? string.replaceAll("§[^0-9A-Fa-fk-orx]", "") : string.replaceAll("§[^0-9a-fk-or]", "");
+		return InteractiveChat.version.isPost1_16() ? string.replaceAll("§[^0-9A-Fa-fk-orx]", "") : string.replaceAll("§[^0-9a-fk-or]", "");
 	}
 	
     public static String getLastColors(String input) {

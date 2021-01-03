@@ -24,6 +24,7 @@ import com.loohp.interactivechat.Utils.ChatColorUtils;
 import com.loohp.interactivechat.Utils.CustomStringUtils;
 import com.loohp.interactivechat.Utils.ItemNBTUtils;
 import com.loohp.interactivechat.Utils.MaterialUtils;
+import com.loohp.interactivechat.Utils.NBTUtils;
 import com.loohp.interactivechat.Utils.RarityUtils;
 
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -145,7 +146,7 @@ public class ItemDisplay {
 									}
 								    String itemJson = ItemNBTUtils.getNMSItemStackJson(item);
 								    //Bukkit.getConsoleSender().sendMessage(itemJson.length() + "");
-								    if (((InteractiveChat.version.isLegacy() || InteractiveChat.protocolManager.getProtocolVersion(reciever) < 393) && itemJson.length() > 30000) || (!InteractiveChat.version.isLegacy() && itemJson.length() > 200000)) {
+								    if ((itemJson.length() > 30000 && InteractiveChat.block30000) || ((InteractiveChat.version.isLegacy() || InteractiveChat.protocolManager.getProtocolVersion(reciever) < 393) && itemJson.length() > 30000) || (!InteractiveChat.version.isLegacy() && itemJson.length() > 200000)) {
 								    	ItemStack trimedItem = new ItemStack(item.getType());
 								    	trimedItem.addUnsafeEnchantments(item.getEnchantments());
 								    	if (item.hasItemMeta() && item.getItemMeta().hasLore()) {
@@ -179,7 +180,7 @@ public class ItemDisplay {
 								    } else {
 								    	useTranslatable = true;
 								    	itemString = MaterialUtils.getMinecraftLangName(item);
-								    }
+								    }							
 								    itemString = ChatColorUtils.filterIllegalColorCodes(itemString);
 								    amountString = String.valueOf(item.getAmount());
 								    message = ChatColorUtils.translateAlternateColorCodes('&', PlaceholderAPI.setPlaceholders(player, InteractiveChat.itemReplaceText.replace("{Amount}", amountString)));
@@ -235,11 +236,17 @@ public class ItemDisplay {
 					            		if (useTranslatable) {
 											if (!InteractiveChat.version.isLegacy()) {
 												TranslatableComponent transItem = new TranslatableComponent(itemString);
+												if (item.getType().equals(Material.PLAYER_HEAD)) {
+													String owner = NBTUtils.getString(item, "SkullOwner", "Name");
+													if (owner != null) {
+														transItem.addWith(owner);
+													}
+												}
 												transItem.setColor(RarityUtils.getRarityColor(item));
 												if (!isAir) {
 													transItem.setHoverEvent(hoverItem);
 												}
-											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled") == true) {
+											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
 													ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
 													transItem.setClickEvent(clickItem);
 											    }
@@ -250,7 +257,7 @@ public class ItemDisplay {
 												if (!isAir) {
 													itemitemtextcomponent.setHoverEvent(hoverItem);
 												}
-											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled") == true) {
+											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
 													ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
 													itemitemtextcomponent.setClickEvent(clickItem);
 											    }
@@ -261,7 +268,7 @@ public class ItemDisplay {
 											if (!isAir) {
 												itemitemtextcomponent.setHoverEvent(hoverItem);
 											}
-										    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled") == true) {
+										    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
 												ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
 												itemitemtextcomponent.setClickEvent(clickItem);
 										    }
@@ -275,7 +282,7 @@ public class ItemDisplay {
 										if (!isAir) {
 											itemtextcomponent.setHoverEvent(hoverItem);
 										}
-									    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled") == true) {
+									    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
 											ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
 											itemtextcomponent.setClickEvent(clickItem);
 									    }
@@ -286,10 +293,16 @@ public class ItemDisplay {
 												if (!InteractiveChat.version.isLegacy()) {
 													TranslatableComponent transItem = new TranslatableComponent(itemString);
 													transItem.setColor(RarityUtils.getRarityColor(item));
+													if (item.getType().equals(Material.PLAYER_HEAD)) {
+														String owner = NBTUtils.getString(item, "SkullOwner", "Name");
+														if (owner != null) {
+															transItem.addWith(owner);
+														}
+													}
 													if (!isAir) {
 														transItem.setHoverEvent(hoverItem);
 													}
-												    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled") == true) {
+												    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
 														ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
 														transItem.setClickEvent(clickItem);
 												    }
@@ -300,7 +313,7 @@ public class ItemDisplay {
 													if (!isAir) {
 														itemitemtextcomponent.setHoverEvent(hoverItem);
 													}
-												    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled") == true) {
+												    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
 														ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
 														itemitemtextcomponent.setClickEvent(clickItem);
 												    }
@@ -311,7 +324,7 @@ public class ItemDisplay {
 												if (!isAir) {
 													itemitemtextcomponent.setHoverEvent(hoverItem);
 												}
-											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled") == true) {
+											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
 													ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
 													itemitemtextcomponent.setClickEvent(clickItem);
 											    }
@@ -326,15 +339,15 @@ public class ItemDisplay {
 								}
 							} else {
 								TextComponent message = null;
-								if (InteractiveChat.PlayerNotFoundReplaceEnable == true) {
+								if (InteractiveChat.PlayerNotFoundReplaceEnable) {
 									message = new TextComponent(InteractiveChat.PlayerNotFoundReplaceText.replace("{Placeholer}", InteractiveChat.itemPlaceholder));
 								} else {
 									message = new TextComponent(InteractiveChat.itemPlaceholder);
 								}
-								if (InteractiveChat.PlayerNotFoundHoverEnable == true) {
+								if (InteractiveChat.PlayerNotFoundHoverEnable) {
 									message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(InteractiveChat.PlayerNotFoundHoverText.replace("{Placeholer}", InteractiveChat.itemPlaceholder)).create()));
 								}
-								if (InteractiveChat.PlayerNotFoundClickEnable == true) {
+								if (InteractiveChat.PlayerNotFoundClickEnable) {
 									String text1 = ChatColorUtils.translateAlternateColorCodes('&', InteractiveChat.PlayerNotFoundClickValue.replace("{Placeholer}", InteractiveChat.itemPlaceholder));
 									message.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(InteractiveChat.PlayerNotFoundClickAction), text1));
 								}

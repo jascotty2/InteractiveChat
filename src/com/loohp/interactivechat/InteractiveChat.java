@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -33,12 +34,17 @@ import com.loohp.interactivechat.ObjectHolders.CommandPlaceholderInfo;
 import com.loohp.interactivechat.ObjectHolders.ICPlaceholder;
 import com.loohp.interactivechat.ObjectHolders.MentionPair;
 import com.loohp.interactivechat.Updater.Updater;
-import com.loohp.interactivechat.Utils.ChatComponentUtils;
 import com.loohp.interactivechat.Utils.ItemNBTUtils;
 import com.loohp.interactivechat.Utils.MCVersion;
 import com.loohp.interactivechat.Utils.MaterialUtils;
 import com.loohp.interactivechat.Utils.PotionUtils;
 import com.loohp.interactivechat.Utils.RarityUtils;
+
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.HoverEvent.Action;
+import net.md_5.bungee.api.chat.hover.content.Text;
 
 public class InteractiveChat extends JavaPlugin {
 	
@@ -54,6 +60,8 @@ public class InteractiveChat extends JavaPlugin {
 	
 	public static boolean EssentialsHook = false;
 	public static boolean ChatManagerHook = false;
+	
+	public static boolean t = false;
 	
 	public static boolean useItem = true;
 	public static boolean useInventory = true;
@@ -82,6 +90,7 @@ public class InteractiveChat extends JavaPlugin {
 	public static String usePlayerNameClickAction = "SUGGEST_COMMAND";
 	public static String usePlayerNameClickValue = "";
 	public static boolean usePlayerNameCaseSensitive = true;
+	public static boolean usePlayerNameOnTranslatables = true;
 	
 	public static boolean PlayerNotFoundHoverEnable = true;
 	public static String PlayerNotFoundHoverText = "&cUnable to parse placeholder..";
@@ -95,6 +104,14 @@ public class InteractiveChat extends JavaPlugin {
 	public static ItemStack itemFrame2;
 	
 	public static boolean AllowMention = true;
+	
+	public static boolean clickableCommands = true;
+	public static String clickableCommandsPrefix = "[";
+	public static String clickableCommandsSuffix = "]";
+	public static ClickEvent.Action clickableCommandsAction = ClickEvent.Action.SUGGEST_COMMAND;
+	public static String clickableCommandsFormat = "";
+	public static String clickableCommandsHoverText = null;
+	public static boolean clickableCommandsEnforceColors = true;
 	
 	public static String NoPermission = "&cYou do not have permission to use that command!";
 	public static String InvExpired = "&cThis inventory view has expired!";
@@ -138,7 +155,11 @@ public class InteractiveChat extends JavaPlugin {
 	public static boolean legacyChatAPI = false;
 	public static boolean useCustomPlaceholderPermissions = false;
 	
+	public static boolean block30000 = false;
+	
 	public static Optional<Character> chatAltColorCode = Optional.empty();
+	
+	public static AtomicLong messagesCounter = new AtomicLong(0);
 
 	@Override
 	public void onEnable() {	
@@ -214,16 +235,14 @@ public class InteractiveChat extends JavaPlugin {
 	    ClientSettingPackets.clientSettingsListener();
 	    
 	    try {
-			Class.forName("net.md_5.bungee.api.chat.hover.content.Content");
+			TextComponent test = new TextComponent("Legacy Bungeecord Chat API Test");
+			test.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new Text("Test Hover Text")));
+			test.getHoverEvent().getContents();
 			legacyChatAPI = false;
-		} catch (ClassNotFoundException e) {
+		} catch (Throwable e) {
 			legacyChatAPI = true;
-		};
-		
-		if (legacyChatAPI) {
-			ChatComponentUtils.setupLegacy();
 			Bukkit.getConsoleSender().sendMessage(ChatColor.YELLOW + "[InteractiveChat] Legacy Bungeecord Chat API detected, using legacy methods...");
-		}
+		};
 	    
 	    getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[InteractiveChat] InteractiveChat has been Enabled!");
 	    

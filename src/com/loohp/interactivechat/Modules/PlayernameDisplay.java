@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import com.loohp.interactivechat.InteractiveChat;
@@ -26,19 +25,20 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 
 public class PlayernameDisplay {
 	
 	public static BaseComponent process(BaseComponent basecomponent, String messageKey, Optional<Player> sender, long unix) {
 		List<ReplaceTextBundle> names = new ArrayList<ReplaceTextBundle>();
 		Bukkit.getOnlinePlayers().forEach((each) -> {
-			names.add(new ReplaceTextBundle(ChatColor.stripColor(each.getName()), each, each.getName()));
-			if (!ChatColor.stripColor(each.getName()).equals(ChatColor.stripColor(each.getDisplayName()))) {
-				names.add(new ReplaceTextBundle(ChatColor.stripColor(each.getDisplayName()), each, each.getDisplayName()));
+			names.add(new ReplaceTextBundle(ChatColorUtils.stripColor(each.getName()), each, each.getName()));
+			if (!ChatColorUtils.stripColor(each.getName()).equals(ChatColorUtils.stripColor(each.getDisplayName()))) {
+				names.add(new ReplaceTextBundle(ChatColorUtils.stripColor(each.getDisplayName()), each, each.getDisplayName()));
 			}
 		});	
 		if (InteractiveChat.EssentialsHook) {
-			InteractiveChat.essenNick.forEach((player, name) -> names.add(new ReplaceTextBundle(ChatColor.stripColor(name), player, name)));
+			InteractiveChat.essenNick.forEach((player, name) -> names.add(new ReplaceTextBundle(ChatColorUtils.stripColor(name), player, name)));
 		}
 		
 		Collections.sort(names);
@@ -60,7 +60,32 @@ public class PlayernameDisplay {
 			if (matched.stream().anyMatch(each -> ChatComponentUtils.areSimilar(each, base, true))) {
 				newlist.add(base);
 			} else if (!(base instanceof TextComponent)) {
-				newlist.add(base);
+				if (InteractiveChat.usePlayerNameOnTranslatables && base instanceof TranslatableComponent) {
+					TranslatableComponent trans = (TranslatableComponent) base;
+					List<BaseComponent> withs = trans.getWith();
+					if (withs != null) {
+						for (int i = 0; i < withs.size(); i++) {
+							if (withs.get(i) instanceof TextComponent) {
+								TextComponent text = (TextComponent) withs.get(i);
+								if (ChatColorUtils.stripColor(text.toLegacyText()).equalsIgnoreCase(placeholder)) {
+									TextComponent message = new TextComponent(ChatColorUtils.stripColor(replaceText));
+									if (InteractiveChat.usePlayerNameHoverEnable) {
+										String playertext = PlaceholderAPI.setPlaceholders(player, InteractiveChat.usePlayerNameHoverText);
+										message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(playertext).create()));
+									}
+									if (InteractiveChat.usePlayerNameClickEnable) {
+										String playertext = PlaceholderAPI.setPlaceholders(player, InteractiveChat.usePlayerNameClickValue);
+										message.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(InteractiveChat.usePlayerNameClickAction), playertext));
+									}
+									withs.set(i, message);
+								}
+							}
+						}
+					}
+					newlist.add(base);
+				} else {
+					newlist.add(base);
+				}
 			} else {
 				TextComponent textcomponent = (TextComponent) base;
 				String text = textcomponent.getText();

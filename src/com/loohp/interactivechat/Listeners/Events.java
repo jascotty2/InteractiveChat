@@ -25,7 +25,6 @@ import com.loohp.interactivechat.Utils.CustomStringUtils;
 import com.loohp.interactivechat.Utils.MessageUtils;
 
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.md_5.bungee.api.ChatColor;
 
 public class Events implements Listener {
 	
@@ -97,7 +96,7 @@ public class Events implements Listener {
 		
 		event.setMessage(MessageUtils.preprocessMessage(message));
 		
-		InteractiveChat.messages.put(ChatColor.stripColor(ChatColorUtils.translateAlternateColorCodes('&', event.getMessage())), event.getPlayer().getUniqueId());
+		InteractiveChat.messages.put(ChatColorUtils.stripColor(ChatColorUtils.translateAlternateColorCodes('&', event.getMessage())), event.getPlayer().getUniqueId());
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
@@ -142,7 +141,7 @@ public class Events implements Listener {
 		message = MessageUtils.preprocessMessage(message);
 		event.setMessage(message);
 		
-		InteractiveChat.messages.put(ChatColor.stripColor(ChatColorUtils.translateAlternateColorCodes('&', event.getMessage())), player.getUniqueId());
+		InteractiveChat.messages.put(ChatColorUtils.stripColor(ChatColorUtils.translateAlternateColorCodes('&', event.getMessage())), player.getUniqueId());
 	}
 	
     private void checkMention(AsyncPlayerChatEvent event) {
@@ -150,17 +149,17 @@ public class Events implements Listener {
 		Player sender = event.getPlayer();
 		if (InteractiveChat.AllowMention == true && sender.hasPermission("interactivechat.mention.player")) {
 			for (Player player : Bukkit.getOnlinePlayers()) {
-				List<String> playernames = new ArrayList<String>();
-    			playernames.add(ChatColor.stripColor(player.getName()));
+				List<String> playernames = new ArrayList();
+    			playernames.add(ChatColorUtils.stripColor(player.getName()));
     			if (!player.getName().equals(player.getDisplayName())) {
-    				playernames.add(ChatColor.stripColor(player.getDisplayName()));
+    				playernames.add(ChatColorUtils.stripColor(player.getDisplayName()));
 					if (!player.getDisplayName().matches("^[a-zA-Z0-9_].*")) {
 						playernames.add(player.getDisplayName().substring(1));
 					}
     			}
     			if (InteractiveChat.EssentialsHook) {
     				if (InteractiveChat.essenNick.containsKey(player)) {
-    					playernames.add(ChatColor.stripColor(InteractiveChat.essenNick.get(player)));
+    					playernames.add(ChatColorUtils.stripColor(InteractiveChat.essenNick.get(player)));
     				}
     			}
        			for (String name : playernames) {
@@ -197,6 +196,7 @@ public class Events implements Listener {
 		
 		String message = ChatColorUtils.translateAlternateColorCodes(InteractiveChat.chatAltColorCode.get(), event.getMessage());
 		event.setMessage(message);
+		//Bukkit.getConsoleSender().sendMessage(message.replace(ChatColor.COLOR_CHAR, '&'));
 	}
 	
 	private void translateAltColorCode(PlayerCommandPreprocessEvent event) {
@@ -217,6 +217,31 @@ public class Events implements Listener {
 		String message = ChatColorUtils.translateAlternateColorCodes(InteractiveChat.chatAltColorCode.get(), event.getMessage());
 		event.setMessage(message);
 	}
+	
+	@EventHandler(priority=EventPriority.LOWEST)
+	public void onInventoryClickLowest(InventoryClickEvent event) {
+		if (event.getClickedInventory() == null) {
+			return;
+		}
+		if (event.getClickedInventory().getType().equals(InventoryType.CREATIVE)) {
+			return;
+		}
+		if (event.getView().getTopInventory() == null) {
+			return;
+		}
+		if (InteractiveChat.inventoryDisplay.containsValue(event.getView().getTopInventory())) {
+			event.setCancelled(true);
+			return;
+		}
+		if (InteractiveChat.enderDisplay.containsValue(event.getView().getTopInventory())) {
+			event.setCancelled(true);
+			return;
+		}
+		if (InteractiveChat.itemDisplay.containsValue(event.getView().getTopInventory())) {
+			event.setCancelled(true);
+			return;
+		}
+ 	}
 	
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onInventoryClick(InventoryClickEvent event) {

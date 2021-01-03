@@ -17,6 +17,7 @@ import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.loohp.interactivechat.InteractiveChat;
 import com.loohp.interactivechat.API.Events.PostPacketComponentProcessEvent;
 import com.loohp.interactivechat.API.Events.PrePacketComponentProcessEvent;
+import com.loohp.interactivechat.Modules.CommandsDisplay;
 import com.loohp.interactivechat.Modules.CustomPlaceholderDisplay;
 import com.loohp.interactivechat.Modules.EnderchestDisplay;
 import com.loohp.interactivechat.Modules.InventoryDisplay;
@@ -41,6 +42,7 @@ public class ChatPackets {
 		InteractiveChat.protocolManager.addPacketListener(new PacketAdapter(InteractiveChat.plugin, ListenerPriority.MONITOR, PacketType.Play.Server.CHAT) {
 		    @Override
 		    public void onPacketSending(PacketEvent event) {
+		    	InteractiveChat.messagesCounter.getAndIncrement();
 		    	int debug = 0;
 		    	try {
 		        if (!event.getPacketType().equals(PacketType.Play.Server.CHAT)) {
@@ -119,12 +121,7 @@ public class ChatPackets {
 		        basecomponent = commandsender.getBaseComponent();
 		        if (sender.isPresent()) {
 		        	InteractiveChat.keyPlayer.put(rawMessageKey, sender.get());
-		        }
-		        debug++;
-		        Bukkit.getScheduler().runTaskLaterAsynchronously(InteractiveChat.plugin, () -> {
-		        	InteractiveChat.keyTime.remove(rawMessageKey);
-		        	InteractiveChat.keyPlayer.remove(rawMessageKey);
-		        }, 5);
+		        }		 
 		        debug++;
 		        UUID preEventSenderUUID = sender.isPresent() ? sender.get().getUniqueId() : null;
 				PrePacketComponentProcessEvent preEvent = new PrePacketComponentProcessEvent(event.isAsync(), reciever, basecomponent, field, preEventSenderUUID);
@@ -158,6 +155,10 @@ public class ChatPackets {
 		        debug++;
 		        basecomponent = CustomPlaceholderDisplay.process(basecomponent, sender, reciever, rawMessageKey, unix);
 		        debug++;
+		        if (InteractiveChat.clickableCommands) {
+		        	basecomponent = CommandsDisplay.process(basecomponent);
+		        }
+		        debug++;
 		        if (InteractiveChat.version.isPost1_16()) {
 			        if (!sender.isPresent() || (sender.isPresent() && sender.get().hasPermission("interactivechat.customfont.translate"))) {
 			        	basecomponent = ChatComponentUtils.translatePluginFontFormatting(basecomponent);
@@ -167,7 +168,7 @@ public class ChatPackets {
 		        basecomponent = InteractiveChat.FilterUselessColorCodes ? ChatComponentUtils.cleanUpLegacyText(basecomponent, reciever) : ChatComponentUtils.respectClientColorSettingsWithoutCleanUp(basecomponent, reciever);       
 		        String json = ComponentSerializer.toString(basecomponent);
 		        boolean longerThanMaxLength = false;
-		        if (((InteractiveChat.version.isLegacy() || InteractiveChat.protocolManager.getProtocolVersion(reciever) < 393) && json.length() > 30000) || (!InteractiveChat.version.isLegacy() && json.length() > 262000)) {
+		        if ((InteractiveChat.block30000 && json.length() > 30000) || ((InteractiveChat.version.isLegacy() || InteractiveChat.protocolManager.getProtocolVersion(reciever) < 393) && json.length() > 30000) || (!InteractiveChat.version.isLegacy() && json.length() > 262000)) {
 		        	longerThanMaxLength = true;
 		        }
 		        debug++;
@@ -177,10 +178,14 @@ public class ChatPackets {
 		        } else {
 		        	packet.getModifier().write(1, new BaseComponent[]{basecomponent});
 		        }
-		        debug++;
 		        UUID postEventSenderUUID = sender.isPresent() ? sender.get().getUniqueId() : null;
 		        PostPacketComponentProcessEvent postEvent = new PostPacketComponentProcessEvent(event.isAsync(), reciever, packet, postEventSenderUUID, longerThanMaxLength);
 		        Bukkit.getPluginManager().callEvent(postEvent);
+		        debug++;	  
+		        Bukkit.getScheduler().runTaskLater(InteractiveChat.plugin, () -> {
+		        	InteractiveChat.keyTime.remove(rawMessageKey);
+		        	InteractiveChat.keyPlayer.remove(rawMessageKey);
+		        }, 5);
 		        debug++;
 		        if (postEvent.isCancelled()) {
 		        	event.setReadOnly(false);
