@@ -181,8 +181,8 @@ public class ChatPackets {
 		        UUID postEventSenderUUID = sender.isPresent() ? sender.get().getUniqueId() : null;
 		        PostPacketComponentProcessEvent postEvent = new PostPacketComponentProcessEvent(event.isAsync(), reciever, packet, postEventSenderUUID, longerThanMaxLength);
 		        Bukkit.getPluginManager().callEvent(postEvent);
-		        debug++;	  
-		        Bukkit.getScheduler().runTaskLater(InteractiveChat.plugin, () -> {
+		        debug++;
+		        Bukkit.getScheduler().runTaskLaterAsynchronously(InteractiveChat.plugin, () -> {
 		        	InteractiveChat.keyTime.remove(rawMessageKey);
 		        	InteractiveChat.keyPlayer.remove(rawMessageKey);
 		        }, 5);
