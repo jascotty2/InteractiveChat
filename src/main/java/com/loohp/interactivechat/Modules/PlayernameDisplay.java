@@ -101,7 +101,7 @@ public class PlayernameDisplay {
 			} else {
 				TextComponent textcomponent = (TextComponent) base;
 				String text = textcomponent.getText();
-				String regex = InteractiveChat.usePlayerNameCaseSensitive ? "(?<!ï¿½)" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(placeholder)) : "(?i)(?<!ï¿½)(" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(placeholder)) + ")";
+				String regex = InteractiveChat.usePlayerNameCaseSensitive ? "(?<!§)" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(placeholder)) : "(?i)(?<!§)(" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(placeholder)) + ")";
 				
 				if (!text.matches(".*" + regex + ".*")) {
 					newlist.add(textcomponent);
@@ -154,32 +154,5 @@ public class PlayernameDisplay {
 			product.addExtra(each);
 		}
 		return product;
-	}
-
-	static Pattern pattern = Pattern.compile("\\[%if_[^% ]+%\\]");
-
-	static String replaceCustomConditionals(Player p, String msg) {
-		if (msg != null && p != null && pattern.matcher(msg).find()) {
-			String lines[] = msg.split("\n");
-			msg = "";
-			for (String s : lines) {
-				if (s.matches("^\\[%if_[^% ]+%\\].*")) {
-					if(!p.isOp()) {
-						// Permission match
-						int end = s.indexOf("%]");
-						String perm = s.substring(5, end);
-						if (p.hasPermission(perm)) {
-							msg += s.substring(end + 2) + "\n";
-						}
-					}
-				} else {
-					msg += s + "\n";
-				}
-			}
-			if (!msg.isEmpty()) {
-				msg = msg.substring(0, msg.length() - 1);
-			}
-		}
-		return msg;
 	}
 }

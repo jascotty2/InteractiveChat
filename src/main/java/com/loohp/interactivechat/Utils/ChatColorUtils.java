@@ -47,7 +47,7 @@ public class ChatColorUtils {
 	}
 	
 	public static String stripColor(String string) {
-		return string.replaceAll("ï¿½[0-9A-Fa-fk-orx]", "");
+		return string.replaceAll("§[0-9A-Fa-fk-orx]", "");
 	}
 	
 	public static String filterIllegalColorCodes(String string) {

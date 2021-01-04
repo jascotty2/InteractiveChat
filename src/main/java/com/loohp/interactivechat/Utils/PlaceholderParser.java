@@ -37,7 +37,7 @@ public class PlaceholderParser {
 					e.printStackTrace();
 				}
 			}
-			return PlaceholderAPI.setPlaceholders(player.getLocalPlayer(), str);
+			return PlaceholderAPI.setPlaceholders(player.getLocalPlayer(), replaceCustomConditionals(player.getLocalPlayer(), str));
 		} else {
 			for (Entry<String, String> entry : player.getRemotePlaceholdersMapping().entrySet()) {
 				str = str.replace(entry.getKey(), entry.getValue());
@@ -58,4 +58,30 @@ public class PlaceholderParser {
 		return matchingPlaceholders;
 	}
 
+	static Pattern pattern = Pattern.compile("\\[%if_[^% ]+%\\]");
+
+	static String replaceCustomConditionals(Player p, String msg) {
+		if (msg != null && p != null && pattern.matcher(msg).find()) {
+			String lines[] = msg.split("\n");
+			msg = "";
+			for (String s : lines) {
+				if (s.matches("^\\[%if_[^% ]+%\\].*")) {
+					if(!p.isOp()) {
+						// Permission match
+						int end = s.indexOf("%]");
+						String perm = s.substring(5, end);
+						if (p.hasPermission(perm)) {
+							msg += s.substring(end + 2) + "\n";
+						}
+					}
+				} else {
+					msg += s + "\n";
+				}
+			}
+			if (!msg.isEmpty()) {
+				msg = msg.substring(0, msg.length() - 1);
+			}
+		}
+		return msg;
+	}
 }
