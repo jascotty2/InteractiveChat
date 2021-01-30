@@ -34,8 +34,8 @@ import net.md_5.bungee.api.chat.TextComponent;
 
 public class EnderchestDisplay {
 	
-	private static Map<UUID, Map<String, Long>> placeholderCooldowns = InteractiveChat.placeholderCooldowns;
-	private static Map<UUID, Long> universalCooldowns = InteractiveChat.universalCooldowns;
+	private static final Map<UUID, Map<String, Long>> placeholderCooldowns = InteractiveChat.placeholderCooldowns;
+	private static final Map<UUID, Long> universalCooldowns = InteractiveChat.universalCooldowns;
 	
 	@SuppressWarnings("deprecation")
 	public static BaseComponent process(BaseComponent basecomponent, Optional<PlayerWrapper> optplayer, Player reciever, String messageKey, long unix) {
@@ -51,7 +51,7 @@ public class EnderchestDisplay {
 				}
 				
 				if (!placeholderCooldowns.containsKey(player.getUniqueId())) {
-					placeholderCooldowns.put(player.getUniqueId(), new ConcurrentHashMap<String, Long>());
+					placeholderCooldowns.put(player.getUniqueId(), new ConcurrentHashMap<>());
 				}
 				Map<String, Long> spmap = placeholderCooldowns.get(player.getUniqueId());
 				if (spmap.containsKey(InteractiveChat.itemPlaceholder)) {
@@ -69,7 +69,7 @@ public class EnderchestDisplay {
 		}
 		
 		List<BaseComponent> basecomponentlist = CustomStringUtils.loadExtras(basecomponent);
-		List<BaseComponent> newlist = new ArrayList<BaseComponent>();
+		List<BaseComponent> newlist = new ArrayList<>();
 		for (BaseComponent base : basecomponentlist) {
 			if (!(base instanceof TextComponent)) {
 				newlist.add(base);
@@ -77,19 +77,19 @@ public class EnderchestDisplay {
 				TextComponent textcomponent = (TextComponent) base;
 				String text = textcomponent.getText();
 				if (InteractiveChat.enderCaseSensitive) {
-					if (!text.contains(InteractiveChat.enderPlaceholder)) {
+					if (!ChatColorUtils.stripColor(text).contains(ChatColorUtils.stripColor(InteractiveChat.enderPlaceholder))) {
 						newlist.add(textcomponent);
 						continue;
 					}
 				} else {
-					if (!text.toLowerCase().contains(InteractiveChat.enderPlaceholder.toLowerCase())) {
+					if (!ChatColorUtils.stripColor(text).toLowerCase().contains(ChatColorUtils.stripColor(InteractiveChat.enderPlaceholder).toLowerCase())) {
 						newlist.add(textcomponent);
 						continue;
 					}
 				}
 				
-				String regex = InteractiveChat.enderCaseSensitive ? "(?<!§)" + CustomStringUtils.escapeMetaCharacters(InteractiveChat.enderPlaceholder) : "(?i)(?<!§)(" + CustomStringUtils.escapeMetaCharacters(InteractiveChat.enderPlaceholder) + ")";
-				List<String> trim = new LinkedList<String>(Arrays.asList(text.split(regex, -1)));
+				String regex = InteractiveChat.enderCaseSensitive ? "(?<!\u00a7)" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(InteractiveChat.enderPlaceholder)) : "(?i)(?<!\u00a7)(" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(InteractiveChat.enderPlaceholder)) + ")";
+				List<String> trim = new LinkedList<>(Arrays.asList(text.split(regex, -1)));
 				if (trim.get(trim.size() - 1).equals("")) {
 					trim.remove(trim.size() - 1);
 				}
@@ -102,7 +102,7 @@ public class EnderchestDisplay {
 					newlist.add(before);
 					lastColor = ChatColorUtils.getLastColors(before.getText());
 					
-					boolean endwith = InteractiveChat.enderCaseSensitive ? text.endsWith(InteractiveChat.enderPlaceholder) : text.toLowerCase().endsWith(InteractiveChat.enderPlaceholder.toLowerCase());
+					boolean endwith = InteractiveChat.enderCaseSensitive ? text.matches(".*" + regex + "$") : text.toLowerCase().matches(".*" + regex.toLowerCase() + "$");
 					if ((trim.size() - 1) > i || endwith) {
 						if (trim.get(i).endsWith("\\") && !trim.get(i).endsWith("\\\\")) {
 							String color = ChatColorUtils.getLastColors(newlist.get(newlist.size() - 1).toLegacyText());
@@ -153,8 +153,7 @@ public class EnderchestDisplay {
 									String textComp = ChatColorUtils.translateAlternateColorCodes('&', PlaceholderParser.parse(player, replaceText));
 									
 									BaseComponent[] bcJson = TextComponent.fromLegacyText(textComp);
-					            	List<BaseComponent> baseJson = new ArrayList<BaseComponent>();
-					            	baseJson = CustomStringUtils.loadExtras(Arrays.asList(bcJson));
+					            	List<BaseComponent> baseJson = CustomStringUtils.loadExtras(Arrays.asList(bcJson));
 					            	
 					            	List<String> hoverList = ConfigManager.getConfig().getStringList("ItemDisplay.EnderChest.HoverMessage");
 									String endertext = ChatColorUtils.translateAlternateColorCodes('&', PlaceholderParser.parse(player, String.join("\n", hoverList)));
@@ -172,17 +171,17 @@ public class EnderchestDisplay {
 								}
 							} else {
 								TextComponent message = null;
-								if (InteractiveChat.PlayerNotFoundReplaceEnable) {
-									message = new TextComponent(InteractiveChat.PlayerNotFoundReplaceText.replace("{Placeholer}", InteractiveChat.enderPlaceholder));
+								if (InteractiveChat.playerNotFoundReplaceEnable) {
+									message = new TextComponent(InteractiveChat.playerNotFoundReplaceText.replace("{Placeholer}", InteractiveChat.enderPlaceholder));
 								} else {
 									message = new TextComponent(InteractiveChat.enderPlaceholder);
 								}
-								if (InteractiveChat.PlayerNotFoundHoverEnable) {
-									message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(InteractiveChat.PlayerNotFoundHoverText.replace("{Placeholer}", InteractiveChat.enderPlaceholder)).create()));
+								if (InteractiveChat.playerNotFoundHoverEnable) {
+									message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(InteractiveChat.playerNotFoundHoverText.replace("{Placeholer}", InteractiveChat.enderPlaceholder)).create()));
 								}
-								if (InteractiveChat.PlayerNotFoundClickEnable) {
-									String endertext = ChatColorUtils.translateAlternateColorCodes('&', InteractiveChat.PlayerNotFoundClickValue.replace("{Placeholer}", InteractiveChat.enderPlaceholder));
-									message.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(InteractiveChat.PlayerNotFoundClickAction), endertext));
+								if (InteractiveChat.playerNotFoundClickEnable) {
+									String endertext = ChatColorUtils.translateAlternateColorCodes('&', InteractiveChat.playerNotFoundClickValue.replace("{Placeholer}", InteractiveChat.enderPlaceholder));
+									message.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(InteractiveChat.playerNotFoundClickAction), endertext));
 								}
 								
 								newlist.add(message);

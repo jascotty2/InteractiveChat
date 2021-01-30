@@ -20,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import com.cryptomorin.xseries.XMaterial;
 import com.loohp.interactivechat.ConfigManager;
 import com.loohp.interactivechat.InteractiveChat;
 import com.loohp.interactivechat.API.Events.ItemPlaceholderEvent;
@@ -28,7 +29,7 @@ import com.loohp.interactivechat.ObjectHolders.PlayerWrapper;
 import com.loohp.interactivechat.Utils.ChatColorUtils;
 import com.loohp.interactivechat.Utils.CustomStringUtils;
 import com.loohp.interactivechat.Utils.ItemNBTUtils;
-import com.loohp.interactivechat.Utils.MaterialUtils;
+import com.loohp.interactivechat.Utils.LanguageUtils;
 import com.loohp.interactivechat.Utils.NBTUtils;
 import com.loohp.interactivechat.Utils.PlaceholderParser;
 import com.loohp.interactivechat.Utils.PlayerUtils;
@@ -103,18 +104,18 @@ public class ItemDisplay {
 				TextComponent textcomponent = (TextComponent) base;
 				String text = textcomponent.getText();
 				if (InteractiveChat.itemCaseSensitive) {
-					if (!text.contains(InteractiveChat.itemPlaceholder)) {
+					if (!ChatColorUtils.stripColor(text).contains(ChatColorUtils.stripColor(InteractiveChat.itemPlaceholder))) {
 						newlist.add(textcomponent);
 						continue;
 					}
 				} else {
-					if (!text.toLowerCase().contains(InteractiveChat.itemPlaceholder.toLowerCase())) {
+					if (!ChatColorUtils.stripColor(text).toLowerCase().contains(ChatColorUtils.stripColor(InteractiveChat.itemPlaceholder).toLowerCase())) {
 						newlist.add(textcomponent);
 						continue;
 					}
 				}
 				
-				String regex = InteractiveChat.itemCaseSensitive ? "(?<!§)" + CustomStringUtils.escapeMetaCharacters(InteractiveChat.itemPlaceholder) : "(?i)(?<!§)(" + CustomStringUtils.escapeMetaCharacters(InteractiveChat.itemPlaceholder) + ")";
+				String regex = InteractiveChat.itemCaseSensitive ? "(?<!\u00a7)" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(InteractiveChat.itemPlaceholder)) : "(?i)(?<!\u00a7)(" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(InteractiveChat.itemPlaceholder)) + ")";
 				List<String> trim = new LinkedList<String>(Arrays.asList(text.split(regex, -1)));
 				if (trim.get(trim.size() - 1).equals("")) {
 					trim.remove(trim.size() - 1);
@@ -128,7 +129,7 @@ public class ItemDisplay {
 					newlist.add(before);
 					lastColor = ChatColorUtils.getLastColors(before.getText());
 					
-					boolean endwith = InteractiveChat.itemCaseSensitive ? text.endsWith(InteractiveChat.itemPlaceholder) : text.toLowerCase().endsWith(InteractiveChat.itemPlaceholder.toLowerCase());
+					boolean endwith = InteractiveChat.itemCaseSensitive ? text.matches(".*" + regex + "$") : text.toLowerCase().matches(".*" + regex.toLowerCase() + "$");
 					if ((trim.size() - 1) > i || endwith) {
 						if (trim.get(i).endsWith("\\") && !trim.get(i).endsWith("\\\\")) {
 							String color = ChatColorUtils.getLastColors(newlist.get(newlist.size() - 1).toLegacyText());
@@ -143,7 +144,7 @@ public class ItemDisplay {
 							if (optplayer.isPresent()) {
 								PlayerWrapper player = optplayer.get();
 								if (PlayerUtils.hasPermission(player.getUniqueId(), "interactivechat.module.item", true, 5)) {
-									ItemStack item = null;							
+									ItemStack item;							
 									boolean isAir = false;
 									if (InteractiveChat.version.isOld()) {
 										if (player.getEquipment().getItemInHand() == null) {
@@ -166,6 +167,7 @@ public class ItemDisplay {
 											item = player.getEquipment().getItemInMainHand().clone();
 										}
 									}
+									XMaterial xMaterial = XMaterial.matchXMaterial(item);
 									
 									ItemPlaceholderEvent event = new ItemPlaceholderEvent(player, reciever, basecomponent, i, item);
 									Bukkit.getPluginManager().callEvent(event);
@@ -173,7 +175,7 @@ public class ItemDisplay {
 									
 								    String itemJson = ItemNBTUtils.getNMSItemStackJson(item);
 								    //Bukkit.getConsoleSender().sendMessage(itemJson.length() + "");
-								    if ((itemJson.length() > 30000 && InteractiveChat.block30000) || ((InteractiveChat.version.isLegacy() || InteractiveChat.protocolManager.getProtocolVersion(reciever) < 393) && itemJson.length() > 30000) || (!InteractiveChat.version.isLegacy() && itemJson.length() > 200000)) {
+								    if (InteractiveChat.sendOriginalIfTooLong && itemJson.length() > 32767) {
 								    	ItemStack trimedItem = new ItemStack(item.getType());
 								    	trimedItem.addUnsafeEnchantments(item.getEnchantments());
 								    	if (item.hasItemMeta() && item.getItemMeta().hasLore()) {
@@ -193,22 +195,12 @@ public class ItemDisplay {
 								    String itemString = "";
 								    String amountString = "";
 								    boolean useTranslatable = false;
-								    if (item.hasItemMeta()) {
-									    if (item.getItemMeta().hasDisplayName()) {
-									    	if (!item.getItemMeta().getDisplayName().equals("")) {
-									    		itemString = item.getItemMeta().getDisplayName();
-									    	} else {
-									    		useTranslatable = true;
-									    		itemString = MaterialUtils.getMinecraftLangName(item);
-									    	}
-									    } else {
-									    	useTranslatable = true;
-									    	itemString = MaterialUtils.getMinecraftLangName(item);
-									    }
+								    if (item.hasItemMeta() && item.getItemMeta().hasDisplayName() && !item.getItemMeta().getDisplayName().equals("")) {
+								    	itemString = item.getItemMeta().getDisplayName();
 								    } else {
 								    	useTranslatable = true;
-								    	itemString = MaterialUtils.getMinecraftLangName(item);
-								    }							
+								    	itemString = LanguageUtils.getTranslationKey(item);
+								    }
 								    itemString = ChatColorUtils.filterIllegalColorCodes(itemString);
 								    amountString = String.valueOf(item.getAmount());
 								    message = ChatColorUtils.translateAlternateColorCodes('&', PlaceholderParser.parse(player, InteractiveChat.itemReplaceText.replace("{Amount}", amountString)));
@@ -218,7 +210,8 @@ public class ItemDisplay {
 									long time = InteractiveChat.keyTime.get(messageKey);
 									if (!InteractiveChat.itemDisplay.containsKey(time)) {
 										if (useInventoryView(item)) {
-											Inventory inv = Bukkit.createInventory(null, 36, title);
+											Inventory container = ((InventoryHolder) ((BlockStateMeta) item.getItemMeta()).getBlockState()).getInventory();
+											Inventory inv = Bukkit.createInventory(null, container.getSize() + 9, title);
 											ItemStack empty = InteractiveChat.itemFrame1.clone();
 											if (item.getType().equals(InteractiveChat.itemFrame1.getType())) {
 												empty = InteractiveChat.itemFrame2.clone();
@@ -226,15 +219,14 @@ public class ItemDisplay {
 											ItemMeta emptyMeta = empty.getItemMeta();
 											emptyMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "");
 											empty.setItemMeta(emptyMeta);
-											for (int j = 0; j < 9; j = j + 1) {
+											for (int j = 0; j < 9; j++) {
 												inv.setItem(j, empty);
 											}
 											inv.setItem(4, item);
-											Inventory container = ((InventoryHolder) ((BlockStateMeta) item.getItemMeta()).getBlockState()).getInventory();
 											for (int j = 0; j < container.getSize(); j++) {
 												ItemStack shulkerItem = container.getItem(j);
 												if (shulkerItem != null && !shulkerItem.getType().equals(Material.AIR)) {
-													inv.setItem(j + 9, shulkerItem);
+													inv.setItem(j + 9, shulkerItem == null ? null : shulkerItem.clone());
 												}
 											}										
 											InteractiveChat.itemDisplay.put(time, inv);	
@@ -247,7 +239,7 @@ public class ItemDisplay {
 											ItemMeta emptyMeta = empty.getItemMeta();
 											emptyMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "");
 											empty.setItemMeta(emptyMeta);
-											for (int j = 0; j < inv.getSize(); j = j + 1) {
+											for (int j = 0; j < inv.getSize(); j++) {
 												inv.setItem(j, empty);
 											}
 											inv.setItem(13, item);				            							
@@ -258,35 +250,22 @@ public class ItemDisplay {
 					            	String[] parts = message.split("\\{Item\\}");					            	
 					            	if (message.startsWith("{Item}")) {
 					            		if (useTranslatable) {
-											if (!InteractiveChat.version.isLegacy()) {
-												TranslatableComponent transItem = new TranslatableComponent(itemString);
-												if (item.getType().equals(Material.PLAYER_HEAD)) {
-													String owner = NBTUtils.getString(item, "SkullOwner", "Name");
-													if (owner != null) {
-														transItem.addWith(owner);
-													}
+											TranslatableComponent transItem = new TranslatableComponent(itemString);
+											if (xMaterial.equals(XMaterial.PLAYER_HEAD)) {
+												String owner = NBTUtils.getString(item, "SkullOwner", "Name");
+												if (owner != null) {
+													transItem.addWith(owner);
 												}
-												transItem.setColor(RarityUtils.getRarityColor(item));
-												if (!isAir) {
-													transItem.setHoverEvent(hoverItem);
-												}
-											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
-													ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
-													transItem.setClickEvent(clickItem);
-											    }
-											    newlist.add(transItem);
-											} else {
-												TextComponent itemitemtextcomponent = new TextComponent(itemString);
-												itemitemtextcomponent.setText(RarityUtils.getRarityColor(item) + itemitemtextcomponent.getText());
-												if (!isAir) {
-													itemitemtextcomponent.setHoverEvent(hoverItem);
-												}
-											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
-													ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
-													itemitemtextcomponent.setClickEvent(clickItem);
-											    }
-											    newlist.add(itemitemtextcomponent);
 											}
+											transItem.setColor(RarityUtils.getRarityColor(item));
+											if (!isAir) {
+												transItem.setHoverEvent(hoverItem);
+											}
+										    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
+												ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
+												transItem.setClickEvent(clickItem);
+										    }
+										    newlist.add(transItem);
 										} else {
 											TextComponent itemitemtextcomponent = new TextComponent(itemString);
 											if (!isAir) {
@@ -314,35 +293,22 @@ public class ItemDisplay {
 										
 										if (u < parts.length - 1 || message.endsWith("{Item}")) {
 											if (useTranslatable) {
-												if (!InteractiveChat.version.isLegacy()) {
-													TranslatableComponent transItem = new TranslatableComponent(itemString);
-													transItem.setColor(RarityUtils.getRarityColor(item));
-													if (item.getType().equals(Material.PLAYER_HEAD)) {
-														String owner = NBTUtils.getString(item, "SkullOwner", "Name");
-														if (owner != null) {
-															transItem.addWith(owner);
-														}
+												TranslatableComponent transItem = new TranslatableComponent(itemString);
+												transItem.setColor(RarityUtils.getRarityColor(item));
+												if (xMaterial.equals(XMaterial.PLAYER_HEAD)) {
+													String owner = NBTUtils.getString(item, "SkullOwner", "Name");
+													if (owner != null) {
+														transItem.addWith(owner);
 													}
-													if (!isAir) {
-														transItem.setHoverEvent(hoverItem);
-													}
-												    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
-														ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
-														transItem.setClickEvent(clickItem);
-												    }
-												    newlist.add(transItem);
-												} else {
-													TextComponent itemitemtextcomponent = new TextComponent(itemString);
-													itemitemtextcomponent.setText(RarityUtils.getRarityColor(item) + itemitemtextcomponent.getText());
-													if (!isAir) {
-														itemitemtextcomponent.setHoverEvent(hoverItem);
-													}
-												    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
-														ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
-														itemitemtextcomponent.setClickEvent(clickItem);
-												    }
-												    newlist.add(itemitemtextcomponent);
 												}
+												if (!isAir) {
+													transItem.setHoverEvent(hoverItem);
+												}
+											    if (ConfigManager.getConfig().getBoolean("ItemDisplay.Item.GUIEnabled")) {
+													ClickEvent clickItem = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/interactivechat viewitem " + time);
+													transItem.setClickEvent(clickItem);
+											    }
+											    newlist.add(transItem);
 											} else {
 												TextComponent itemitemtextcomponent = new TextComponent(itemString);
 												if (!isAir) {
@@ -363,17 +329,17 @@ public class ItemDisplay {
 								}
 							} else {
 								TextComponent message = null;
-								if (InteractiveChat.PlayerNotFoundReplaceEnable) {
-									message = new TextComponent(InteractiveChat.PlayerNotFoundReplaceText.replace("{Placeholer}", InteractiveChat.itemPlaceholder));
+								if (InteractiveChat.playerNotFoundReplaceEnable) {
+									message = new TextComponent(InteractiveChat.playerNotFoundReplaceText.replace("{Placeholer}", InteractiveChat.itemPlaceholder));
 								} else {
 									message = new TextComponent(InteractiveChat.itemPlaceholder);
 								}
-								if (InteractiveChat.PlayerNotFoundHoverEnable) {
-									message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(InteractiveChat.PlayerNotFoundHoverText.replace("{Placeholer}", InteractiveChat.itemPlaceholder)).create()));
+								if (InteractiveChat.playerNotFoundHoverEnable) {
+									message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(InteractiveChat.playerNotFoundHoverText.replace("{Placeholer}", InteractiveChat.itemPlaceholder)).create()));
 								}
-								if (InteractiveChat.PlayerNotFoundClickEnable) {
-									String text1 = ChatColorUtils.translateAlternateColorCodes('&', InteractiveChat.PlayerNotFoundClickValue.replace("{Placeholer}", InteractiveChat.itemPlaceholder));
-									message.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(InteractiveChat.PlayerNotFoundClickAction), text1));
+								if (InteractiveChat.playerNotFoundClickEnable) {
+									String text1 = ChatColorUtils.translateAlternateColorCodes('&', InteractiveChat.playerNotFoundClickValue.replace("{Placeholer}", InteractiveChat.itemPlaceholder));
+									message.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(InteractiveChat.playerNotFoundClickAction), text1));
 								}
 								
 								newlist.add(message);

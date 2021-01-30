@@ -14,13 +14,14 @@ import org.bukkit.inventory.Inventory;
 
 import com.loohp.interactivechat.BungeeMessaging.BungeeMessageSender;
 import com.loohp.interactivechat.Data.PlayerDataManager.PlayerData;
+import com.loohp.interactivechat.ObjectHolders.ICPlaceholder;
 import com.loohp.interactivechat.Updater.Updater;
 import com.loohp.interactivechat.Updater.Updater.UpdaterResponse;
 import com.loohp.interactivechat.Utils.ChatColorUtils;
-import com.loohp.interactivechat.Utils.MaterialUtils;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
 
 public class Commands implements CommandExecutor, TabCompleter {
 
@@ -39,7 +40,6 @@ public class Commands implements CommandExecutor, TabCompleter {
 		if (args[0].equalsIgnoreCase("reload")) {
 			if (sender.hasPermission("interactivechat.reload")) {
 				ConfigManager.reloadConfig();
-				MaterialUtils.reloadLang();
 				if (InteractiveChat.bungeecordMode) {
 					try {
 						BungeeMessageSender.reloadBungeeConfig();
@@ -47,9 +47,9 @@ public class Commands implements CommandExecutor, TabCompleter {
 						e.printStackTrace();
 					}
 				}
-				sender.sendMessage(InteractiveChat.ReloadPlugin);
+				sender.sendMessage(InteractiveChat.reloadPluginMessage);
 			} else {
-				sender.sendMessage(InteractiveChat.NoPermission);
+				sender.sendMessage(InteractiveChat.noPermissionMessage);
 			}
 			return true;
 		}
@@ -71,7 +71,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 					}
 				});
 			} else {
-				sender.sendMessage(InteractiveChat.NoPermission);
+				sender.sendMessage(InteractiveChat.noPermissionMessage);
 			}
 			return true;
 		}
@@ -99,7 +99,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 							}
 						}
 					} else {
-						sender.sendMessage(InteractiveChat.Console);
+						sender.sendMessage(InteractiveChat.noConsoleMessage);
 					}
 				} else {
 					if (sender.hasPermission("interactivechat.mention.toggle.others")) {
@@ -123,15 +123,58 @@ public class Commands implements CommandExecutor, TabCompleter {
 								}
 							}
 						} else {
-							sender.sendMessage(InteractiveChat.InvalidPlayer);
+							sender.sendMessage(InteractiveChat.invalidPlayerMessage);
 						}
 					} else {
-						sender.sendMessage(InteractiveChat.NoPermission);
+						sender.sendMessage(InteractiveChat.noPermissionMessage);
 					}
 				}
 			} else {
-				sender.sendMessage(InteractiveChat.NoPermission);
+				sender.sendMessage(InteractiveChat.noPermissionMessage);
 			}
+			return true;
+		}
+		
+		if (args[0].equalsIgnoreCase("list")) {
+			if (sender.hasPermission("interactivechat.list.all")) {
+				sender.sendMessage(InteractiveChat.listPlaceholderHeader);
+				String body = InteractiveChat.listPlaceholderBody;
+				int i = 0;
+				for (ICPlaceholder placeholder : InteractiveChat.placeholderList) {
+					i++;
+					String text = body.replace("{Order}", i + "").replace("{Keyword}", "\\" + placeholder.getKeyword()).replace("{Description}", placeholder.getDescription());
+					sender.sendMessage(text);
+				}
+			} else if (sender.hasPermission("interactivechat.list")) {
+				sender.sendMessage(InteractiveChat.listPlaceholderHeader);
+				String body = InteractiveChat.listPlaceholderBody;
+				int i = 0;
+				for (ICPlaceholder placeholder : InteractiveChat.placeholderList) {
+					if ((placeholder.isBuildIn() && sender.hasPermission(placeholder.getPermission())) || (!placeholder.isBuildIn() && (sender.hasPermission(placeholder.getPermission()) || !InteractiveChat.useCustomPlaceholderPermissions))) {
+						i++;
+						String text = body.replace("{Order}", i + "").replace("{Keyword}", "\\" + placeholder.getKeyword()).replace("{Description}", placeholder.getDescription());
+						sender.sendMessage(text);
+					}
+				}
+			} else {
+				sender.sendMessage(InteractiveChat.noPermissionMessage);
+			}
+			return true;
+		}
+		
+		if (args[0].equalsIgnoreCase("lengthtest") && sender.hasPermission("interactivechat.debug")) {
+			Bukkit.getScheduler().runTaskAsynchronously(InteractiveChat.plugin, () -> {
+				try {
+					int length = args.length < 2 ? 5000 : Integer.parseInt(args[1]);
+					String str = "";
+					for (int i = 0; i < length; i++) {
+						str += (i % 2) == 0 ? (ChatColor.GOLD + "n") : (ChatColor.YELLOW + "a");
+					}
+					sender.spigot().sendMessage(new TextComponent(str));
+				} catch (Exception e) {
+					sender.sendMessage(e.getMessage());
+				}
+			});
 			return true;
 		}
 		
@@ -143,7 +186,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 					Inventory inv = InteractiveChat.inventoryDisplay.get(key);
 					Bukkit.getScheduler().runTask(InteractiveChat.plugin, () -> player.openInventory(inv));
 				} else {
-					player.sendMessage(PlaceholderAPI.setPlaceholders(player, InteractiveChat.InvExpired));
+					player.sendMessage(PlaceholderAPI.setPlaceholders(player, InteractiveChat.invExpiredMessage));
 				}
 				return true;
 			} else if (args[0].equals("viewender")) {
@@ -152,7 +195,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 					Inventory inv = InteractiveChat.enderDisplay.get(key);
 					Bukkit.getScheduler().runTask(InteractiveChat.plugin, () -> player.openInventory(inv));
 				} else {
-					player.sendMessage(PlaceholderAPI.setPlaceholders(player, InteractiveChat.InvExpired));
+					player.sendMessage(PlaceholderAPI.setPlaceholders(player, InteractiveChat.invExpiredMessage));
 				}
 				return true;
 			} else if (args[0].equals("viewitem")) {
@@ -161,7 +204,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 					Inventory inv = InteractiveChat.itemDisplay.get(key);
 					Bukkit.getScheduler().runTask(InteractiveChat.plugin, () -> player.openInventory(inv));
 				} else {
-					player.sendMessage(PlaceholderAPI.setPlaceholders(player, InteractiveChat.InvExpired));
+					player.sendMessage(PlaceholderAPI.setPlaceholders(player, InteractiveChat.invExpiredMessage));
 				}
 				return true;
 			}
@@ -189,6 +232,9 @@ public class Commands implements CommandExecutor, TabCompleter {
 			if (sender.hasPermission("interactivechat.mention.toggle")) {
 				tab.add("mentiontoggle");
 			}
+			if (sender.hasPermission("interactivechat.list")) {
+				tab.add("list");
+			}
 			return tab;
 		case 1:
 			if (sender.hasPermission("interactivechat.reload")) {
@@ -204,6 +250,11 @@ public class Commands implements CommandExecutor, TabCompleter {
 			if (sender.hasPermission("interactivechat.mention.toggle")) {
 				if ("mentiontoggle".startsWith(args[0].toLowerCase())) {
 					tab.add("mentiontoggle");
+				}
+			}
+			if (sender.hasPermission("interactivechat.list")) {
+				if ("list".startsWith(args[0].toLowerCase())) {
+					tab.add("list");
 				}
 			}
 			return tab;

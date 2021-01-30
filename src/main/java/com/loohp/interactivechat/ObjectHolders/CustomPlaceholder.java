@@ -7,17 +7,17 @@ import net.md_5.bungee.api.chat.ClickEvent;
 
 public class CustomPlaceholder extends ICPlaceholder {
 	
-	int position;
-	ParsePlayer parsePlayer;
-	List<String> aliases;
-	boolean parseKeyword;
-	long cooldown;
-	CustomPlaceholderHoverEvent hover;
-	CustomPlaceholderClickEvent click;
-	CustomPlaceholderReplaceText replace;
+	private int position;
+	private ParsePlayer parsePlayer;
+	private List<String> aliases;
+	private boolean parseKeyword;
+	private long cooldown;
+	private CustomPlaceholderHoverEvent hover;
+	private CustomPlaceholderClickEvent click;
+	private CustomPlaceholderReplaceText replace;
 	
-	public CustomPlaceholder(int position, ParsePlayer parsePlayer, String keyword, List<String> aliases, boolean parseKeyword, boolean caseSensitive, long cooldown, CustomPlaceholderHoverEvent hover, CustomPlaceholderClickEvent click, CustomPlaceholderReplaceText replace) {
-		super(keyword, caseSensitive);
+	public CustomPlaceholder(int position, ParsePlayer parsePlayer, String keyword, List<String> aliases, boolean parseKeyword, boolean caseSensitive, long cooldown, CustomPlaceholderHoverEvent hover, CustomPlaceholderClickEvent click, CustomPlaceholderReplaceText replace, String description) {
+		super(keyword, caseSensitive, description, true);
 		this.position = position;
 		this.parsePlayer = parsePlayer;
 		this.aliases = aliases;
@@ -28,8 +28,14 @@ public class CustomPlaceholder extends ICPlaceholder {
 		this.replace = replace;
 	}
 	
+	@Deprecated
 	public int getPosition() {
 		return position;
+	}
+	
+	@Override
+	public String getPermission() {
+		return "interactivechat.module.custom." + position;
 	}
 	
 	public ParsePlayer getParsePlayer() {

@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import com.loohp.interactivechat.InteractiveChat;
 import com.loohp.interactivechat.ObjectHolders.ICPlaceholder;
 import com.loohp.interactivechat.ObjectHolders.PlayerWrapper;
-import com.loohp.interactivechat.ObjectHolders.ProcessCommandsReturn;
+import com.loohp.interactivechat.ObjectHolders.ProcessCommandsResult;
 import com.loohp.interactivechat.Utils.ChatColorUtils;
 import com.loohp.interactivechat.Utils.ChatComponentUtils;
 import com.loohp.interactivechat.Utils.JsonUtils;
@@ -25,6 +25,7 @@ public class ProcessBungeeRequestedMessage {
 	
 	public static String processAndRespond(Player reciever, String component) {
 		BaseComponent basecomponent = ChatComponentUtils.join(ComponentSerializer.parse(ChatColorUtils.filterIllegalColorCodes(component)));
+		BaseComponent originalComponent = ChatComponentUtils.clone(basecomponent);
         
         try {
         	if (basecomponent.toLegacyText().equals("")) {
@@ -48,7 +49,7 @@ public class ProcessBungeeRequestedMessage {
         	InteractiveChat.cooldownbypass.put(unix, new HashSet<String>());
         }
         
-        ProcessCommandsReturn commandsender = ProcessCommands.process(basecomponent);
+        ProcessCommandsResult commandsender = ProcessCommands.process(basecomponent);
         Optional<PlayerWrapper> sender = Optional.empty();
         if (commandsender.getSender() != null) {
         	Player bukkitplayer = Bukkit.getPlayer(commandsender.getSender());
@@ -81,7 +82,7 @@ public class ProcessBungeeRequestedMessage {
 			}
         	server = sender.get().getServer();
         } else {
-        	server = PlayerWrapper.currentServerRepresentation;
+        	server = PlayerWrapper.CURRENT_SERVER_REPRESENTATION;
         }
 		
         if (InteractiveChat.usePlayerName) {
@@ -105,7 +106,7 @@ public class ProcessBungeeRequestedMessage {
         }
         
         List<ICPlaceholder> serverPlaceholderList = InteractiveChat.remotePlaceholderList.get(server);
-        if (server.equals(PlayerWrapper.currentServerRepresentation) || serverPlaceholderList == null) {
+        if (server.equals(PlayerWrapper.CURRENT_SERVER_REPRESENTATION) || serverPlaceholderList == null) {
         	serverPlaceholderList = InteractiveChat.placeholderList;
         }
         basecomponent = CustomPlaceholderDisplay.process(basecomponent, sender, reciever, rawMessageKey, serverPlaceholderList, unix);
@@ -125,14 +126,19 @@ public class ProcessBungeeRequestedMessage {
         	InteractiveChat.keyPlayer.remove(rawMessageKey);
         }, 5);
         		        
-        basecomponent = InteractiveChat.FilterUselessColorCodes ? ChatComponentUtils.cleanUpLegacyText(basecomponent, reciever) : ChatComponentUtils.respectClientColorSettingsWithoutCleanUp(basecomponent, reciever);       
+        basecomponent = InteractiveChat.filterUselessColorCodes ? ChatComponentUtils.cleanUpLegacyText(basecomponent, reciever) : ChatComponentUtils.respectClientColorSettingsWithoutCleanUp(basecomponent, reciever);       
         
         String json = ComponentSerializer.toString(basecomponent);
-        if ((InteractiveChat.block30000 && json.length() > 30000) || ((InteractiveChat.version.isLegacy() || InteractiveChat.protocolManager.getProtocolVersion(reciever) < 393) && json.length() > 30000) || (!InteractiveChat.version.isLegacy() && json.length() > 262000)) {
-        	return "{\"text\":\"\"}";
+        if (InteractiveChat.sendOriginalIfTooLong && json.length() > 32767) {
+        	String originalJson = ComponentSerializer.toString(originalComponent);
+        	if (originalJson.length() > 32767) {
+        		return "{\"text\":\"\"}";
+        	} else {
+        		return originalJson;
+        	}
         }
         
-		return ComponentSerializer.toString(basecomponent);
+		return json;
 	}
 
 }

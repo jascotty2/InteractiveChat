@@ -49,6 +49,7 @@ import io.netty.channel.ChannelPromise;
 import net.md_5.bungee.ServerConnection;
 import net.md_5.bungee.UserConnection;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -88,6 +89,7 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 	protected static Map<UUID, UUID> requestedMessages = new ConcurrentHashMap<>(); 
 	
 	protected static Map<UUID, List<UUID>> requestedMessageProcesses = new ConcurrentHashMap<>();
+	private static Map<Integer, Boolean> permissionChecks = new ConcurrentHashMap<>();
 	
 	public static List<String> parseCommands = new ArrayList<>();
 	
@@ -95,6 +97,7 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 	public static Map<String, List<ICPlaceholder>> placeholderList = new HashMap<>();
 	
 	public static int delay = 200;
+	protected static Map<String, BackendInteractiveChatData> serverInteractiveChatInfo = new ConcurrentHashMap<>();
 
 	@Override
 	public void onEnable() {
@@ -140,6 +143,51 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 		getLogger().info(ChatColor.RED + "[InteractiveChat] InteractiveChatBungee has been disabled!");
 	}
 	
+	public static Map<String, BackendInteractiveChatData> getBackendInteractiveChatInfo() {
+		return Collections.unmodifiableMap(serverInteractiveChatInfo);
+	}
+	
+	public static CompletableFuture<Boolean> hasPermission(CommandSender sender, String permission) {
+		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		if (!(sender instanceof ProxiedPlayer)) {
+			future.complete(sender.hasPermission(permission));
+			return future;
+		}
+		
+		ProxiedPlayer player = (ProxiedPlayer) sender;
+		if (player.hasPermission(permission)) {
+			future.complete(true);
+		} else {
+			if (player.getServer() == null) {
+				future.complete(false);
+			} else {
+				new Thread(new Runnable() {
+        			@Override
+        			public void run() {
+        				try {
+        					int id = random.nextInt();
+							PluginMessageSendingBungee.checkPermission(player, permission, id);
+							long start = System.currentTimeMillis() + delay + 500;
+							while (System.currentTimeMillis() < start) {
+								Boolean value = permissionChecks.remove(id);
+								if (value != null) {
+									future.complete(value);
+									return;
+								} else {
+									TimeUnit.NANOSECONDS.sleep(500000);
+								}
+							}
+							future.complete(false);
+						} catch (IOException | InterruptedException e) {
+							e.printStackTrace();
+						}
+        			}
+        		}).start();
+			}
+		}
+		return future;
+	}
+	
 	public static void loadConfig() {
 		try {
 			config = yamlConfigProvider.load(configFile);
@@ -155,7 +203,7 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 			public void run() {
 				try {
 					PluginMessageSendingBungee.sendPlayerListData();
-					PluginMessageSendingBungee.sendDelay();
+					PluginMessageSendingBungee.sendDelayAndScheme();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -178,7 +226,7 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 		int packetNumber = in.readInt();
 		int packetId = in.readShort();
 		
-		if (packetId == 0x08 || packetId == 0x09 || packetId == 0x10 || packetId == 0x11) {
+		if (packetId >= 0x08) {
 			boolean isEnding = in.readBoolean();
 	        byte[] data = new byte[packet.length - 7];
 	        in.readFully(data);
@@ -281,7 +329,11 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 		        	for (int i = 0; i < size1; i++) {
 		        		boolean isBulitIn = input.readBoolean();
 		        		if (isBulitIn) {
-		        			list.add(new ICPlaceholder(DataTypeIO.readString(input, StandardCharsets.UTF_8), input.readBoolean()));
+		        			String keyword = DataTypeIO.readString(input, StandardCharsets.UTF_8);
+		        			boolean casesensitive = input.readBoolean();
+		        			String description = DataTypeIO.readString(input, StandardCharsets.UTF_8);
+		        			String permission = DataTypeIO.readString(input, StandardCharsets.UTF_8);
+		        			list.add(new ICPlaceholder(keyword, casesensitive, description, permission));
 		        		} else {
 		        			int customNo = input.readInt();
 		        			ParsePlayer parseplayer = ParsePlayer.fromOrder(input.readByte());	
@@ -301,8 +353,9 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 		        			String clickValue = DataTypeIO.readString(input, StandardCharsets.UTF_8);
 		        			boolean replaceEnabled = input.readBoolean();
 		        			String replaceText = DataTypeIO.readString(input, StandardCharsets.UTF_8);
+		        			String description = DataTypeIO.readString(input, StandardCharsets.UTF_8);
 
-		        			list.add(new CustomPlaceholder(customNo, parseplayer, placeholder, aliases, parseKeyword, casesensitive, cooldown, new CustomPlaceholderHoverEvent(hoverEnabled, hoverText), new CustomPlaceholderClickEvent(clickEnabled, clickEnabled ? ClickEvent.Action.valueOf(clickAction) : null, clickValue), new CustomPlaceholderReplaceText(replaceEnabled, replaceText)));
+		        			list.add(new CustomPlaceholder(customNo, parseplayer, placeholder, aliases, parseKeyword, casesensitive, cooldown, new CustomPlaceholderHoverEvent(hoverEnabled, hoverText), new CustomPlaceholderClickEvent(clickEnabled, clickEnabled ? ClickEvent.Action.valueOf(clickAction) : null, clickValue), new CustomPlaceholderReplaceText(replaceEnabled, replaceText), description));
 		        		}
 		        	}
 		        	placeholderList.put(((Server) event.getSender()).getInfo().getName(), list);
@@ -312,7 +365,7 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 		        	UUID uuid2 = DataTypeIO.readUUID(input);
 		        	String playerdata = DataTypeIO.readString(input, StandardCharsets.UTF_8);
 		        	Configuration playerconfig = yamlConfigProvider.load(playerdata);
-		        	yamlConfigProvider.save(playerconfig, new File(playerDataFolder, uuid2.toString()));
+		        	yamlConfigProvider.save(playerconfig, new File(playerDataFolder, uuid2.toString() + ".yml"));
 		        	PluginMessageSendingBungee.forwardPlayerData(uuid2, playerdata, ((Server) event.getSender()).getInfo());
 		        	break;
 		        }
@@ -386,6 +439,27 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 	@EventHandler
 	public void onServerConnected(ServerConnectedEvent event) {
 		ProxiedPlayer player = event.getPlayer();
+		UUID uuid = player.getUniqueId();
+		
+		new Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				if (player.getServer() != null) {
+					this.cancel();
+					File playerFile = new File(playerDataFolder, uuid.toString() + ".yml");
+					if (playerFile.exists()) {
+						try {
+							Configuration playerconfig = yamlConfigProvider.load(playerFile);
+							StringWriter writer = new StringWriter();
+							yamlConfigProvider.save(playerconfig, writer);
+							PluginMessageSendingBungee.forwardPlayerData(uuid, writer.toString(), player.getServer().getInfo());
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}, 0, 200);
 		
 		ServerConnection serverConnection = (ServerConnection) event.getServer();
 		ChannelWrapper channelWrapper;
@@ -420,22 +494,10 @@ public class InteractiveChatBungee extends Plugin implements Listener {
 	@EventHandler
 	public void onPlayerConnected(PostLoginEvent event) {
 		ProxiedPlayer player = event.getPlayer();
-		UUID uuid = player.getUniqueId();
+
 		forwardedMessages.put(player.getUniqueId(), new ArrayList<>());
 		List<UUID> messageQueue = Collections.synchronizedList(new LinkedList<>());
 		requestedMessageProcesses.put(player.getUniqueId(), messageQueue);
-		
-		File playerFile = new File(playerDataFolder, uuid.toString());
-		if (playerFile.exists()) {
-			try {
-				Configuration playerconfig = yamlConfigProvider.load(playerFile);
-				StringWriter writer = new StringWriter();
-				yamlConfigProvider.save(playerconfig, writer);
-				PluginMessageSendingBungee.forwardPlayerData(uuid, writer.toString(), player.getServer().getInfo());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
 		
 		UserConnection userConnection = (UserConnection) player;
 		ChannelWrapper channelWrapper;

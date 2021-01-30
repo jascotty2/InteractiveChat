@@ -3,24 +3,32 @@ package com.loohp.interactivechat.Listeners;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import com.cryptomorin.xseries.XMaterial;
 import com.loohp.interactivechat.InteractiveChat;
@@ -34,6 +42,7 @@ import com.loohp.interactivechat.Utils.CustomStringUtils;
 import com.loohp.interactivechat.Utils.MessageUtils;
 
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 
 public class Events implements Listener {
@@ -85,7 +94,7 @@ public class Events implements Listener {
 		if (event.isCancelled()) {
 			return;
 		}
-		if (InteractiveChat.ChatManagerHook) {
+		if (InteractiveChat.chatManagerHook) {
 			return;
 		}
 
@@ -137,7 +146,7 @@ public class Events implements Listener {
 		
 		checkMention(event);
 				
-		if (!InteractiveChat.ChatManagerHook) {
+		if (!InteractiveChat.chatManagerHook) {
 			return;
 		}
 		
@@ -194,7 +203,7 @@ public class Events implements Listener {
 						playernames.put(player.getDisplayName().substring(1), player.getUniqueId());
 					}
     			}
-    			if (InteractiveChat.EssentialsHook) {
+    			if (InteractiveChat.essentialsHook) {
     				if (InteractiveChat.essenNick.containsKey(player)) {
     					playernames.put(ChatColorUtils.stripColor(InteractiveChat.essenNick.get(player)), player.getUniqueId());
     				}
@@ -267,6 +276,8 @@ public class Events implements Listener {
 		event.setMessage(message);
 	}
 	
+	private final Set<InventoryClickEvent> cancelledInventory = new HashSet<>();
+	
 	@EventHandler(priority=EventPriority.LOWEST)
 	public void onInventoryClick(InventoryClickEvent event) {
 		if (event.getClickedInventory() == null) {
@@ -278,38 +289,74 @@ public class Events implements Listener {
 		if (event.getView().getTopInventory() == null) {
 			return;
 		}
-		boolean block = false;
-		if (!block && InteractiveChat.inventoryDisplay.inverse().containsKey(event.getView().getTopInventory())) {
-			event.setCancelled(true);
-			block = true;
-		}
-		if (!block && InteractiveChat.enderDisplay.inverse().containsKey(event.getView().getTopInventory())) {
-			event.setCancelled(true);
-			block = true;
-		}
-		if (!block && InteractiveChat.itemDisplay.inverse().containsKey(event.getView().getTopInventory())) {
-			event.setCancelled(true);
-			block = true;
-		}
-		if (block && event.getRawSlot() < event.getView().getTopInventory().getSize()) {
-			if (event.getCurrentItem() != null) {
-				XMaterial xmaterial = XMaterial.matchXMaterial(event.getCurrentItem());
-				if (xmaterial.equals(XMaterial.WRITTEN_BOOK)) {
-					((Player) event.getWhoClicked()).openBook(event.getCurrentItem().clone());
-				} else if (xmaterial.equals(XMaterial.WRITABLE_BOOK)) {
-					ItemStack book = XMaterial.WRITTEN_BOOK.parseItem();
-					if (book != null && book.getItemMeta() instanceof BookMeta) { 
-						BookMeta ori = (BookMeta) event.getCurrentItem().getItemMeta();
-						BookMeta dis = (BookMeta) book.getItemMeta();
-						List<BaseComponent[]> pages = new ArrayList<>(ori.spigot().getPages());
-						dis.spigot().setPages(pages);
-						dis.setTitle("Temp Book");
-						dis.setAuthor("InteractiveChat");
-						book.setItemMeta(dis);
-						((Player) event.getWhoClicked()).openBook(book);
+		Player player = (Player) event.getWhoClicked();
+		Inventory topInventory = event.getView().getTopInventory();
+		if (InteractiveChat.containerDisplay.contains(topInventory) || InteractiveChat.itemDisplay.inverse().containsKey(topInventory) || InteractiveChat.inventoryDisplay.inverse().containsKey(topInventory) || InteractiveChat.enderDisplay.inverse().containsKey(topInventory)) {
+			if (event.getRawSlot() < event.getView().getTopInventory().getSize()) {
+				ItemStack item = event.getCurrentItem();
+				if (item != null) {
+					XMaterial xmaterial = XMaterial.matchXMaterial(item);
+					if (xmaterial.equals(XMaterial.WRITTEN_BOOK)) {
+						player.openBook(item.clone());
+					} else if (xmaterial.equals(XMaterial.WRITABLE_BOOK)) {
+						ItemStack book = XMaterial.WRITTEN_BOOK.parseItem();
+						if (book != null && book.getItemMeta() instanceof BookMeta) { 
+							BookMeta ori = (BookMeta) event.getCurrentItem().getItemMeta();
+							BookMeta dis = (BookMeta) book.getItemMeta();
+							List<BaseComponent[]> pages = new ArrayList<>(ori.spigot().getPages());
+							dis.spigot().setPages(pages);
+							dis.setTitle("Temp Book");
+							dis.setAuthor("InteractiveChat");
+							book.setItemMeta(dis);
+							player.openBook(book);
+						}
+					}
+					if (!InteractiveChat.containerDisplay.contains(topInventory) && item.hasItemMeta() && item.getItemMeta() instanceof BlockStateMeta) {
+						BlockState bsm = ((BlockStateMeta) item.getItemMeta()).getBlockState();
+						if (bsm instanceof InventoryHolder) {
+							Inventory container = ((InventoryHolder) bsm).getInventory();
+							Inventory displayInventory = Bukkit.createInventory(null, container.getSize() + 9, InteractiveChat.containerViewTitle);
+							ItemStack empty = InteractiveChat.itemFrame1.clone();
+							if (item.getType().equals(InteractiveChat.itemFrame1.getType())) {
+								empty = InteractiveChat.itemFrame2.clone();
+							}
+							ItemMeta emptyMeta = empty.getItemMeta();
+							emptyMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "");
+							empty.setItemMeta(emptyMeta);
+							for (int j = 0; j < 9; j++) {
+								displayInventory.setItem(j, empty);
+							}
+							displayInventory.setItem(4, item);
+							for (int i = 0; i < container.getSize(); i++) {
+								ItemStack containerItem = container.getItem(i);
+								displayInventory.setItem(i + 9, containerItem == null ? null : containerItem.clone());
+							}
+							
+							InteractiveChat.containerDisplay.add(displayInventory);
+							Bukkit.getScheduler().runTaskLater(InteractiveChat.plugin, () -> player.openInventory(displayInventory), 2);
+						}
 					}
 				}
 			}
+			
+			event.setCancelled(true);
+			cancelledInventory.add(event);
 		}
  	}
+	
+	@EventHandler(priority=EventPriority.HIGHEST)
+	public void onInventoryClickHighest(InventoryClickEvent event) {
+		if (cancelledInventory.remove(event)) {
+			event.setCancelled(true);
+		}
+ 	}
+	
+	@EventHandler(priority=EventPriority.HIGHEST)
+	public void onInventoryClose(InventoryCloseEvent event) {
+		Inventory topInventory = event.getView().getTopInventory();
+		if (topInventory != null) {
+			InteractiveChat.containerDisplay.remove(topInventory);
+		}
+ 	}
+	
 }

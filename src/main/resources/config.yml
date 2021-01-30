@@ -20,20 +20,32 @@ Messages:
   EnableMentions: "&aPlayer Mentions Enabled!"
   DisableMentions: "&ePlayer Mentions Disabled!"
 
+  #The messages sent when listing placeholders
+  ListPlaceholdersHeader: "&eList of Chat Placeholders:"
+  ListPlaceholdersBody: "&b{Order}. \"&f&l{Keyword}&b\" &6- &e{Description}"
+
   PlayerOnlyCommand: "&cThis command cannot be used in the console!"
   InvalidPlayer: "&cThat is not a valid player!"
 
 Settings:
   #Bungeecord Mode
   Bungeecord: false
-  
-  BlockMessagesLongerThan30000RegardlessOfVersion: true
+  SendOriginalMessageIfExceedLengthLimit: true
+  BungeecordUnknownItem:
+    ReplaceItem: BARRIER
+    DisplayName: "&cUnknown Item {Type}"
+    Lore:
+      - "&7Unable to parse item"
+      - "&7This is likely to be an item that"
+      - "&7does not exist in this version of Minecraft"
   #Use indiviual permissions for custom placeholders
   #For example the first custom placeholder will have the permission
   #interactivechat.module.custom.1
   UseCustomPlaceholderPermissions: false
   #Turn this off if some colors are missing
   FilterUselessColorCodes: true
+  #The title of viewing a container inside an inventory view
+  ContainerViewTitle: "Container Contents"
   #A list of private message commands on your server
   #The plugin will attempt to parse placeholder inside these commands.
   #This list is in REGEX so you can do some more advanced matches.
@@ -166,6 +178,8 @@ ItemDisplay:
     Frame:
       Primary: MAGENTA_STAINED_GLASS_PANE
       Secondary: BLACK_STAINED_GLASS_PANE
+    #This text is used when listing placeholders 
+    Description: "&aShow the Item you are holding in the chat!"
 
   Inventory:    
     #Enable players to show their inventory
@@ -185,6 +199,8 @@ ItemDisplay:
     #Hover Message
     HoverMessage:
       - "&bClick to view!"
+    #This text is used when listing placeholders 
+    Description: "&bShow your Inventory in the chat!"
 
   EnderChest:    
     #Enable players to show their ender chest
@@ -204,6 +220,8 @@ ItemDisplay:
     #Hover Message
     HoverMessage: 
       - "&bClick to view!"
+    #This text is used when listing placeholders 
+    Description: "&dShow your Ender Chest in the chat!"
 
 Player:
   #Let InteractiveChat handle all player names that appears in chat (literally ALL)

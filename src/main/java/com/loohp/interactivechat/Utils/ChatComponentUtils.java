@@ -224,7 +224,7 @@ public class ChatComponentUtils {
 								} else if (c1 instanceof Item && c2 instanceof Item) {
 									Item ci1 = (Item) c1;
 									Item ci2 = (Item) c2;
-									if (!(ci1.getCount() == ci2.getCount() && ci1.getId().equals(ci2.getId()) && ci1.getTag().equals(ci2.getTag()))) {
+									if (!(ci1.getCount() == ci2.getCount() && ((ci1.getId() == null && ci2.getId() == null) || (ci1.getId() != null && ci2.getId() != null && ci1.getId().equals(ci2.getId()))) && ((ci1.getTag() == null && ci2.getTag() == null) || (ci1.getTag() != null && ci2.getTag() != null && ci1.getTag().equals(ci2.getTag()))))) {
 										hoverSim = false;
 										break;
 									}
@@ -343,7 +343,7 @@ public class ChatComponentUtils {
 					thislist.add(current2);
 				}
 			} else {
-				thislist.add(base);
+				thislist.add(clone(base));
 			}
 			
 			if (current == null) {
@@ -426,6 +426,16 @@ public class ChatComponentUtils {
 		}
 		
 		return product;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T extends BaseComponent> T clone(T chatComponent) {
+		try {
+			Class<? extends BaseComponent> clazz = chatComponent.getClass();
+			return (T) clazz.getConstructor(clazz).newInstance(clazz.cast(chatComponent));
+		} catch (Throwable e) {
+			throw new UnsupportedOperationException(chatComponent.getClass() + " is not supported to be cloned.", e);
+		}
 	}
 	
 	public static BaseComponent join(BaseComponent... toJoin) {

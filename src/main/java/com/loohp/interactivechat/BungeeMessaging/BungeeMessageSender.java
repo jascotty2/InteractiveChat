@@ -30,14 +30,24 @@ import com.loohp.interactivechat.Utils.DataTypeIO;
 public class BungeeMessageSender {
 	
 	private static Random random = new Random();
+	protected static short itemStackScheme = 0;
+	protected static short inventoryScheme = 0;
+	
+	public static int getItemStackScheme() {
+		return itemStackScheme;
+	}
+	
+	public static int getInventoryScheme() {
+		return inventoryScheme;
+	}
 	
 	public static boolean forwardData(int packetId, byte[] data) {
-		if (Bukkit.getOnlinePlayers().isEmpty()) {
+		Player player = Bukkit.getOnlinePlayers().stream().findFirst().orElse(null);
+		if (player == null) {
 			return false;
 		}
 		
 		int packetNumber = random.nextInt();
-		Player player = Bukkit.getOnlinePlayers().iterator().next();
 		try {
 			byte[][] dataArray = CustomArrayUtils.divideArray(CompressionUtils.compress(data), 32700);
 			
@@ -71,7 +81,7 @@ public class BungeeMessageSender {
     	DataTypeIO.writeUUID(out, player);
     	out.writeByte(equipment.length);
     	for (ItemStack itemStack : equipment) {
-    		DataTypeIO.writeItemStack(out, itemStack, StandardCharsets.UTF_8);
+    		DataTypeIO.writeItemStack(out, itemStackScheme, itemStack, StandardCharsets.UTF_8);
     	}
     	return forwardData(0x03, out.toByteArray());
     }
@@ -80,7 +90,7 @@ public class BungeeMessageSender {
     	ByteArrayDataOutput out = ByteStreams.newDataOutput();
     	DataTypeIO.writeUUID(out, player);
     	out.writeByte(0);
-    	DataTypeIO.writeInventory(out, title, inventory, StandardCharsets.UTF_8);
+    	DataTypeIO.writeInventory(out, inventoryScheme, title, inventory, StandardCharsets.UTF_8);
     	return forwardData(0x04, out.toByteArray());
     }
     
@@ -88,7 +98,7 @@ public class BungeeMessageSender {
     	ByteArrayDataOutput out = ByteStreams.newDataOutput();
     	DataTypeIO.writeUUID(out, player);
     	out.writeByte(1);
-    	DataTypeIO.writeInventory(out, title, enderchest, StandardCharsets.UTF_8);
+    	DataTypeIO.writeInventory(out, inventoryScheme, title, enderchest, StandardCharsets.UTF_8);
     	return forwardData(0x04, out.toByteArray());
     }
     
@@ -140,7 +150,8 @@ public class BungeeMessageSender {
     	return forwardData(0x10, out.toByteArray());
     }
     
-    public static boolean resetAndForwardPlaceholderList(List<ICPlaceholder> placeholderList) throws IOException {
+    @SuppressWarnings("deprecation")
+	public static boolean resetAndForwardPlaceholderList(List<ICPlaceholder> placeholderList) throws IOException {
     	ByteArrayDataOutput out = ByteStreams.newDataOutput();
     	out.writeInt(placeholderList.size());
     	for (ICPlaceholder placeholder : placeholderList) {
@@ -149,6 +160,8 @@ public class BungeeMessageSender {
     		if (isBuiltIn) {
     			DataTypeIO.writeString(out, placeholder.getKeyword(), StandardCharsets.UTF_8);
     			out.writeBoolean(placeholder.isCaseSensitive());
+    			DataTypeIO.writeString(out, placeholder.getDescription(), StandardCharsets.UTF_8);
+    			DataTypeIO.writeString(out, placeholder.getPermission(), StandardCharsets.UTF_8);
     		} else {
     			CustomPlaceholder customPlaceholder = placeholder.getCustomPlaceholder().get();
     			out.writeInt(customPlaceholder.getPosition());
@@ -174,6 +187,8 @@ public class BungeeMessageSender {
     			CustomPlaceholderReplaceText replace = customPlaceholder.getReplace();
     			out.writeBoolean(replace.isEnabled());
     			DataTypeIO.writeString(out, replace.getReplaceText(), StandardCharsets.UTF_8);
+    			
+    			DataTypeIO.writeString(out, placeholder.getDescription(), StandardCharsets.UTF_8);
     		}
     	}
     	return forwardData(0x11, out.toByteArray());
@@ -184,5 +199,12 @@ public class BungeeMessageSender {
     	DataTypeIO.writeUUID(out, uuid);
     	DataTypeIO.writeString(out, config.saveToString(), StandardCharsets.UTF_8);
     	return forwardData(0x12, out.toByteArray());
+    }
+    
+    public static boolean permissionCheckResponse(int id, boolean value) throws IOException {
+    	ByteArrayDataOutput out = ByteStreams.newDataOutput();
+    	out.writeInt(id);
+    	out.writeBoolean(value);
+    	return forwardData(0x13, out.toByteArray());
     }
 }
