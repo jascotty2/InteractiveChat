@@ -24,7 +24,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 
 public class ConfigManager {
 	
-	private static MCVersion version = InteractiveChat.version;
+	private static final MCVersion version = InteractiveChat.version;
 	
 	public static FileConfiguration getConfig() {
 		return InteractiveChat.plugin.getConfig();

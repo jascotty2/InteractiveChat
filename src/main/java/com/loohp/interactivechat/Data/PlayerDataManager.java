@@ -26,9 +26,9 @@ public class PlayerDataManager implements Listener {
 	public static final String DATA_FOLDER_NAME = "player_data";
 	public static final String FILE_EXTENSION = ".yml";
 
-	private InteractiveChat plugin;
-	private File dataFolder;
-	private Map<UUID, PlayerData> data = new HashMap<>();
+	private final InteractiveChat plugin;
+	private final File dataFolder;
+	private final Map<UUID, PlayerData> data = new HashMap<>();
 	
 	public PlayerDataManager(InteractiveChat plugin) {
 		this.plugin = plugin;
@@ -143,7 +143,7 @@ public class PlayerDataManager implements Listener {
 		public static final String DISABLE_MENTION = "Preferences.DisableMention";
 		
 		private FileConfiguration config;
-		private File file;
+		private final File file;
 		
 		protected PlayerData(File file, FileConfiguration config) {
 			this.file = file;

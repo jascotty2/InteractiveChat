@@ -173,7 +173,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
-		List<String> tab = new ArrayList<String>();
+		List<String> tab = new ArrayList<>();
 		if (!label.equalsIgnoreCase("interactivechat") && !label.equalsIgnoreCase("ic")) {
 			return tab;
 		}

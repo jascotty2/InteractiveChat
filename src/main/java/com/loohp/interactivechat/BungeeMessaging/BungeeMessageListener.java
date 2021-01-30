@@ -41,7 +41,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 public class BungeeMessageListener implements PluginMessageListener {
 
     InteractiveChat plugin;
-    private Map<Integer, byte[]> incomming = new HashMap<>();
+    private final Map<Integer, byte[]> incomming = new HashMap<>();
 
     public BungeeMessageListener(InteractiveChat instance) {
         plugin = instance;

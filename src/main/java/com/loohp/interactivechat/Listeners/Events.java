@@ -190,6 +190,9 @@ public class Events implements Listener {
     			playernames.put(ChatColorUtils.stripColor(player.getName()), player.getUniqueId());
     			if (!player.getName().equals(player.getDisplayName())) {
     				playernames.put(ChatColorUtils.stripColor(player.getDisplayName()), player.getUniqueId());
+					if (!player.getDisplayName().matches("^[a-zA-Z0-9_].*")) {
+						playernames.put(player.getDisplayName().substring(1), player.getUniqueId());
+					}
     			}
     			if (InteractiveChat.EssentialsHook) {
     				if (InteractiveChat.essenNick.containsKey(player)) {

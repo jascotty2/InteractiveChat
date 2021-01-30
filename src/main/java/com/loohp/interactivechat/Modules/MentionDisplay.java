@@ -79,7 +79,7 @@ public class MentionDisplay {
 						reciever.playSound(reciever.getLocation(), sound, volume, pitch);
 					}
 					
-					List<String> names = new ArrayList<String>();
+					List<String> names = new ArrayList<>();
 					names.add(ChatColorUtils.stripColor(reciever.getName()));
 					final String disp = ChatColorUtils.stripColor(reciever.getDisplayName());
 					if (!names.contains(disp)) {
@@ -112,21 +112,21 @@ public class MentionDisplay {
 	@SuppressWarnings("deprecation")
 	public static BaseComponent processPlayer(String placeholder, Player reciever, PlayerWrapper sender, BaseComponent basecomponent, String messageKey, long unix) {
 		List<BaseComponent> basecomponentlist = CustomStringUtils.loadExtras(basecomponent);
-		List<BaseComponent> newlist = new ArrayList<BaseComponent>();
+		List<BaseComponent> newlist = new ArrayList<>();
 		for (BaseComponent base : basecomponentlist) {
 			if (!(base instanceof TextComponent)) {
 				newlist.add(base);
 			} else {
 				TextComponent textcomponent = (TextComponent) base;
 				String text = textcomponent.getText();
-				String regex = "(?i)(?<!§)" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(placeholder));
+				String regex = "(?i)(?<!\u00a7)" + CustomStringUtils.getIgnoreColorCodeRegex(CustomStringUtils.escapeMetaCharacters(placeholder));
 				
 				if (!text.matches(".*" + regex + ".*")) {
 					newlist.add(textcomponent);
 					continue;
 				}
 				
-				List<String> trim = new LinkedList<String>(Arrays.asList(text.split(regex, -1)));
+				List<String> trim = new LinkedList<>(Arrays.asList(text.split(regex, -1)));
 				if (trim.get(trim.size() - 1).equals("")) {
 					trim.remove(trim.size() - 1);
 				}
@@ -145,10 +145,9 @@ public class MentionDisplay {
 				}
 			}
 		}
-		
+
 		TextComponent product = new TextComponent("");
-		for (int i = 0; i < newlist.size(); i++) {
-			BaseComponent each = newlist.get(i);
+		for (BaseComponent each : newlist) {
 			product.addExtra(each);
 		}
 		return product;
